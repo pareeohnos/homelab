@@ -1,0 +1,65 @@
+name: Homelab
+description: A typescript program to deploy my homelab infrastructure
+runtime:
+  name: nodejs
+  options:
+    packagemanager: yarn
+config:
+  general:
+    value:
+      sshPublicKeyFilename: id_ed25519.pub
+
+  hosts:
+    value:
+      router:
+        hostname: vm-router-01
+        ipAddress: 10.0.10.1
+        vlanId: 10
+        tags:
+          - vm
+          - networking
+
+      dns:
+        hostname: lxc-dns-01
+        ipAddress: 10.0.10.2
+        vlanId: 10
+        tags:
+          - container
+          - networking
+
+      unifiController:
+        hostname: lxc-unifi-controller-01
+        ipAddress: 10.0.10.3
+        vlanId: 10
+        tags:
+          - container
+          - networking
+          - unifi
+  proxmox:
+    value:
+      dataStoreId: local-lvm
+      lxcTemplateFileId: local:vztmpl/ubuntu-24.04.2.tar.zst
+      nodes:
+        networking:
+          name: "himalayas"
+
+          network:
+            lanBridgeId: vmbr2
+            bridges:
+              - name: vmbr1
+                autoStart: true
+                comment: WAN
+                ports:
+                  - enp1s0f0
+
+              - name: vmbr2
+                autoStart: true
+                comment: VLANs 
+                vlanAware: true
+                ports:
+                  - enp1s0f1
+
+
+  network:
+    value:
+      domain: home.hooper.co.uk 

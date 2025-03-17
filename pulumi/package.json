@@ -1,0 +1,13 @@
+{
+    "name": "Homelab",
+    "devDependencies": {
+        "@types/node": "^18",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@muhlba91/pulumi-proxmoxve": "^6.18.1",
+        "@pulumi/aws": "^6.0.2",
+        "@pulumi/pulumi": "^3.113.0",
+        "dotenv": "^16.4.7"
+    }
+}
