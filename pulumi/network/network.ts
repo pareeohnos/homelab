@@ -27,7 +27,7 @@ export const networkBridges =
       {
         name,
         autostart: bridge.autostart,
-        ports: bridge.ports,
+        ports: bridge.ports ?? undefined,
         comment: bridge.comment,
         vlanAware: bridge.vlanAware ?? false,
         nodeName: proxmoxConfig.nodes.networking.name,
@@ -35,3 +35,20 @@ export const networkBridges =
       { provider },
     );
   });
+
+export const networkVlans = [
+  new proxmox.network.NetworkVlan(
+    "vmbr2.10",
+    {
+      name: "vmbr2.10",
+      nodeName: proxmoxConfig.nodes.networking.name,
+      comment: "Proxmox management",
+      interface: "vmbr2",
+      autostart: true,
+      gateway: "10.0.10.1",
+      address: "10.0.10.254/24",
+      vlan: 10,
+    },
+    { provider }, //, import: `${proxmoxConfig.nodes.networking.name}:vmbr2.10` },
+  ),
+];

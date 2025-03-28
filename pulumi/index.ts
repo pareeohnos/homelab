@@ -2,7 +2,7 @@ require("dotenv").config({
   path: "../.env",
 });
 
-import { networkBridges } from "./network/network";
+import { networkBridges, networkVlans } from "./network/network";
 import { routerVm } from "./network/router";
 import { dnsServerContainer } from "./network/dns";
 import { unifiControllerContainer } from "./network/unifi_controller";
