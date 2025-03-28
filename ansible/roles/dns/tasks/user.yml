@@ -1,0 +1,17 @@
+- name: Create technitium user
+  block:
+    - name: Create technitium group
+      become: true
+      group:
+        name: technitium
+        state: present
+
+    - name: Create technitium user
+      become: true
+      user:
+        name: technitium
+        shell: /bin/bash
+        groups: technitium
+        state: present
+        shell: /sbin/nologin
+        create_home: no

@@ -1,0 +1,42 @@
+- name: Install technitium DNS server
+  become: true
+  block:
+    - name: Download installation script
+      get_url:
+        url: https://download.technitium.com/dns/install.sh
+        dest: /tmp/install.sh
+
+    - name: Run installer
+      shell:
+        cmd: cat /tmp/install.sh | sudo bash
+
+    - name: Update service to run as technitium user
+      ini_file:
+        dest: /etc/systemd/system/dns.service
+        owner: root
+        group: root
+        mode: 0644
+        section: Service
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+      with_items:
+        - { option: "User", value: "technitium" }
+        - { option: "Group", value: "technitium" }
+        - { option: "CapabilityBoundingSet", value: "CAP_NET_BIND_SERVICE" }
+        - { option: "AmbientCapabilities", value: "CAP_NET_BIND_SERVICE" }
+
+    - name: Change file ownership
+      file:
+        owner: technitium
+        group: technitium
+        recurse: true
+        path: "{{ item }}"
+      loop:
+        - /etc/dns
+        - /opt/technitium
+
+    - name: Reload service
+      systemd_service:
+        state: restarted
+        daemon_reload: true
+        name: dns

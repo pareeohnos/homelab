@@ -94,6 +94,39 @@ Go into BIOS of VM and disable secure boot.
 
 Import config xml file
 
-### Software
+## Software
 
-Ansible
+Now we're on to Ansible. First things first, grab any dependencies we have. The
+second install line will just ensure that everything is fully up to date.
+
+```bash
+ansible-galaxy install -r requirements.yml
+ansible-galaxy install -r requirements.yml --force
+```
+
+Next we're going to lock down the servers. This will setup a
+new `ansible` user, and prevent ssh access for the `root` user. The existing
+authorized SSH key that the `root` user has will be copied to the `ansible`
+user, so you will still be able to connect on the management VLAN.
+
+```bash
+ansible-playbook playbooks/lockdown.yml
+```
+
+Once this has finished, you will no longer be able to access the hosts via the
+`root` user.
+
+To continue, you'll need to ensure that the `OPNSense` router has internet, as
+the remaining steps are going to download packages.
+
+
+### DNS server
+
+The `dns` playbook can be used to install technitium DNS server
+
+```bash
+ansible-playbook playbooks/dns.yml
+```
+
+### Unifi controller
+

@@ -1,0 +1,15 @@
+[bootstrap]
+# Use IP addresses here, as during the bootstrap phase we don't have a DNS
+# server running yet, so we can't use hostnames
+10.0.10.2 # DNS
+10.0.10.3 # Unifi controller
+
+[bootstrap_dns]
+10.0.10.2
+
+[dns]
+vm-dns-01
+
+[networking]
+vm-dns-01
+vm-unifi-controller-01

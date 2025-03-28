@@ -1,0 +1,5 @@
+- name: Create ansible user
+  include_tasks: ansible_user.yml
+
+- name: Hardening sshd
+  include_tasks: sshd.yml

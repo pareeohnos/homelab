@@ -1,0 +1,27 @@
+- name: Setup and configure UFW firewall
+  become: true
+  block:
+    - name: Allow SSH
+      community.general.ufw:
+        rule: allow
+        name: OpenSSH
+
+    - name: Allow dashboard access
+      community.general.ufw:
+        rule: allow
+        proto: tcp
+        port: 5380
+
+    - name: Allow DNS traffic
+      community.general.ufw:
+        rule: allow
+        port: 53
+        proto: "{{ item }}"
+      with_items:
+        - tcp
+        - udp
+
+    - name: Enable UFW
+      community.general.ufw:
+        state: enabled
+

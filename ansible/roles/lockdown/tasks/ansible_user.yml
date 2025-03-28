@@ -1,0 +1,30 @@
+- name: Create ansible user
+  block:
+    - name: Create ansible group
+      group:
+        name: ansible
+        state: present
+
+    - name: Create ansible user
+      user:
+        name: ansible
+        shell: /bin/bash
+        groups: ansible,sudo
+
+    - name: Add ansible to sudoers
+      copy:
+        dest: "/etc/sudoers.d/ansible"
+        content: "ansible ALL=(ALL) NOPASSWD: ALL"
+
+    - name: Copy root SSH key
+      copy:
+        dest: "/home/ansible/.ssh/authorized_keys"
+        src: "/root/.ssh/authorized_keys"
+        remote_src: true
+        group: ansible
+        owner: ansible
+
+    - name: Reload sshd
+      service:
+        name: sshd
+        state: reloaded

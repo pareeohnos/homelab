@@ -1,0 +1,7 @@
+- name: Setup DNS server
+  hosts: bootstrap_dns
+  gather_facts: yes
+  remote_user: ansible
+  roles:
+    - update_packages
+    - dns

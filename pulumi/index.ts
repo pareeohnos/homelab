@@ -8,6 +8,7 @@ import { dnsServerContainer } from "./network/dns";
 import { unifiControllerContainer } from "./network/unifi_controller";
 
 export const bridges = networkBridges;
+export const vlans = networkVlans;
 export const router = routerVm;
 export const dnsServer = dnsServerContainer;
 export const unifiController = unifiControllerContainer;
