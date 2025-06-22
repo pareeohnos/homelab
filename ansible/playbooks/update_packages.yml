@@ -1,0 +1,7 @@
+- name: Update system packages
+  hosts: all:!bootstrap
+  gather_facts: yes
+  remote_user: ansible
+  roles:
+    - update_packages
+    - dns
