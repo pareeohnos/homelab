@@ -16,6 +16,11 @@
         dest: "/etc/sudoers.d/ansible"
         content: "ansible ALL=(ALL) NOPASSWD: ALL"
 
+    - name: Create SSH folder
+      file:
+        path: /home/ansible/.ssh
+        state: directory
+
     - name: Copy root SSH key
       copy:
         dest: "/home/ansible/.ssh/authorized_keys"
