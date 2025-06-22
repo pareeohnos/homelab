@@ -1,3 +1,6 @@
+.DS_Store
 /bin/
 node_modules/
 .env
+
+ansible/roles/treykee.unifi_network_application/

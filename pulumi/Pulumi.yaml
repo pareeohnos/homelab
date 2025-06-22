@@ -59,9 +59,9 @@ config:
                 ports:
                   - enp1s0f1
 
-              - name: vmbr3
-                autoStart: true
-                comment: Proxmox OPNSense network
+              # - name: vmbr3
+              #   autoStart: true
+              #   comment: Proxmox OPNSense network
 
 
   network:

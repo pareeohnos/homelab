@@ -16,6 +16,18 @@ VLANs
 - **60** : Security (cameras)
 - **70** : Homelab (dev stuff, playing with things)
 
+
+Static IP Addresses + hostnames
+
+- DNS server - vm-dns-01 (10.0.10.2)
+- Unifi network application - lxc-unifi-controller-01 (10.0.10.3)
+
+Key URLs
+
+- OPNSense - `vm-router-01.home.hooper.co.uk` or `10.0.10.1`
+- DNS server - `lxc-dns-01.home.hooper.co.uk:5380/`
+- Unifi controller - `lxc-unifi-controller-01.home.hooper.co.uk:8443`
+
 ## 1. Preparation
 
 The below steps are required before everything can be setup.
@@ -130,3 +142,10 @@ ansible-playbook playbooks/dns.yml
 
 ### Unifi controller
 
+The `unifi` playbook can be used to install the unifi network application.
+
+```bash
+ansible-playbook playbooks/unifi.yml
+```
+
+Once finished, the unifi controller will be available at `https://lxc-unifi-controller-01.home.hooper.co.uk:8443`
