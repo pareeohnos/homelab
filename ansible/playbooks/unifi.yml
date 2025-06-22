@@ -1,0 +1,10 @@
+- name: Unifi
+  hosts: unifi
+  gather_facts: yes
+  remote_user: ansible
+  become: true
+  roles:
+    - role: treykee.unifi_network_application
+      unifi_version: 9.2.87
+      unifi_fqdn: vm-unifi-controller-01.home.hooper.co.uk
+      

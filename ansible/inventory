@@ -8,8 +8,11 @@
 10.0.10.2
 
 [dns]
-vm-dns-01
+lxc-dns-01.home.hooper.co.uk ansible_user=ansible
 
 [networking]
-vm-dns-01
-vm-unifi-controller-01
+lxc-dns-01.home.hooper.co.uk ansible_user=ansible
+lxc-unifi-controller-01.home.hooper.co.uk ansible_user=ansible
+
+[unifi]
+lxc-unifi-controller-01.home.hooper.co.uk ansible_user=ansible

@@ -1,2 +1,5 @@
 collections:
   - name: community.general
+
+roles:
+  - name: treykee.unifi_network_application
