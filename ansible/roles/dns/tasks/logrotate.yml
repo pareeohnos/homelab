@@ -1,0 +1,17 @@
+- name: "Configure logrotate"
+  become: true
+  block:
+    - name: "Create logrotate configuration"
+      blockinfile:
+        path: "/etc/logrotate.d/technitium"
+        create: true
+        block: |
+          /etc/dns/logs/*.log {
+            daily
+            rotate 7
+            compress
+            dateext
+            missingok
+            notifempty
+            create 0644 technitium technitium
+          }
