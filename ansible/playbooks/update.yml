@@ -1,0 +1,7 @@
+- name: Update DNS server
+  hosts: dns
+  gather_facts: yes
+  remote_user: ansible
+  become: true
+  roles:
+    - dns_update

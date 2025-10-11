@@ -1,0 +1,23 @@
+- name: Backup configuration
+  block:
+    - name: Prepare backup folder
+      file:
+        path: /tmp/technitium-backup
+        state: "{{ item }}"
+        mode: '0755'
+      loop:
+        - absent
+        - directory
+
+    - name: Copy configuration
+      copy:
+        remote_src: yes
+        src: "{{ item.src }}"
+        dest: "/tmp/technitium-backup"
+      loop:
+        - { src: "/etc/dns/log.config" }
+        - { src: "/etc/dns/auth.config" }
+        - { src: "/etc/dns/dns.config" }
+        - { src: "/etc/dns/zones" }
+        - { src: "/etc/dns/stats" }
+        - { src: "/etc/dns/apps" }

@@ -1,0 +1,7 @@
+- name: Backup configuration
+  include_tasks: "backup.yml"
+
+- name: Update DNS server
+  include_role:
+    name: dns
+    tasks_from: install
