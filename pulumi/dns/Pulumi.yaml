@@ -1,0 +1,35 @@
+name: dns
+description: DNS record configuration for Technitium DNS server
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
+config:
+  dnsRules:
+    value:
+      zones:
+        - name: "home.hooper.co.uk"
+          type: "Primary"
+          records:
+            - type: "A"
+              ipAddress: "10.0.10.1"
+              hostname: "vm-router-01"
+              comments: "OPNSense router"
+            - type: "A"
+              ipAddress: "10.0.10.2"
+              hostname: "lxc-dns-01"
+              comments: "This DNS server"
+            - type: "A"
+              ipAddress: "10.0.10.3"
+              hostname: "lxc-unifi-controller-01"
+              comments: "Unifi network controller"
+            - type: "A"
+              ipAddress: "10.0.70.2"
+              hostname: "vm-home-assistant-01"
+              comments: "Home Assistant"
+packages:
+  technitium:
+    source: terraform-provider
+    version: 1.0.0
+    parameters:
+      - kenske/technitium

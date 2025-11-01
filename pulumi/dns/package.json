@@ -1,0 +1,13 @@
+{
+    "name": "dns",
+    "main": "index.ts",
+    "devDependencies": {
+        "@types/node": "^18",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@pulumi/pulumi": "^3.113.0",
+        "@pulumi/technitium": "file:sdks/technitium",
+        "dotenv": "^17.2.3"
+    }
+}
