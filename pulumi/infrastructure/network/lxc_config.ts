@@ -31,7 +31,7 @@ export const buildLxcConfiguration = (
         cores: 1,
       },
       disk: {
-        datastoreId: proxmoxConfig.dataStoreId,
+        datastoreId: nodeConfig.dataStoreId,
         size: 8,
       },
       features: {
@@ -65,7 +65,7 @@ export const buildLxcConfiguration = (
       ],
       nodeName: nodeConfig.name,
       operatingSystem: {
-        templateFileId: proxmoxConfig.lxcTemplateFileId,
+        templateFileId: nodeConfig.lxcTemplateFileId,
         type: "ubuntu",
       },
       protection: true,

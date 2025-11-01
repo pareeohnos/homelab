@@ -8,11 +8,12 @@ const config = new pulumi.Config();
 
 const proxmoxConfig = config.requireObject<ProxmoxConfiguration>("proxmox");
 const hostsConfig = config.requireObject<HostsConfiguration>("hosts");
+const nodeConfig = proxmoxConfig.nodes.networking;
 
 export const routerVm = new proxmox.vm.VirtualMachine(
   "routerVM",
   {
-    nodeName: proxmoxConfig.nodes.networking.name,
+    nodeName: nodeConfig.name,
     name: hostsConfig.router.hostname,
     bios: "ovmf",
     cpu: {
@@ -31,7 +32,7 @@ export const routerVm = new proxmox.vm.VirtualMachine(
     description: "OPNSense firewall and router",
     disks: [
       {
-        datastoreId: proxmoxConfig.dataStoreId,
+        datastoreId: nodeConfig.dataStoreId,
         interface: "scsi0",
         size: 64,
         discard: "on",
@@ -42,7 +43,7 @@ export const routerVm = new proxmox.vm.VirtualMachine(
       },
     ],
     efiDisk: {
-      datastoreId: proxmoxConfig.dataStoreId,
+      datastoreId: nodeConfig.dataStoreId,
       type: "4m",
       preEnrolledKeys: true,
     },

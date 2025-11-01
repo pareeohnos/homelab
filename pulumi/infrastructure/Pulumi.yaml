@@ -3,12 +3,11 @@ description: A typescript program to deploy my homelab infrastructure
 runtime:
   name: nodejs
   options:
-    packagemanager: yarn
+    packagemanager: pnpm
 config:
   general:
     value:
       sshPublicKeyFilename: id_ed25519.pub
-
   hosts:
     value:
       router:
@@ -18,7 +17,6 @@ config:
         tags:
           - vm
           - networking
-
       dns:
         hostname: lxc-dns-01
         ipAddress: 10.0.10.2
@@ -26,7 +24,6 @@ config:
         tags:
           - container
           - networking
-
       unifiController:
         hostname: lxc-unifi-controller-01
         ipAddress: 10.0.10.3
@@ -35,14 +32,20 @@ config:
           - container
           - networking
           - unifi
+      homeAssistant:
+        hostname: vm-home-assistant-01
+        ipAddress: 10.0.70.2
+        vlanId: 70
+        tags:
+          - vm
+          - homelab
   proxmox:
     value:
-      dataStoreId: local-lvm
-      lxcTemplateFileId: local:vztmpl/ubuntu-24.04.2.tar.zst
       nodes:
         networking:
           name: "himalayas"
-
+          dataStoreId: local-lvm
+          lxcTemplateFileId: local:vztmpl/ubuntu-24.04.2.tar.zst
           network:
             lanBridgeId: vmbr2
             bridges:
@@ -51,19 +54,27 @@ config:
                 comment: WAN
                 ports:
                   - enp1s0f0
-
               - name: vmbr2
                 autoStart: true
-                comment: VLANs 
+                comment: VLANs
                 vlanAware: true
                 ports:
                   - enp1s0f1
-
-              # - name: vmbr3
-              #   autoStart: true
-              #   comment: Proxmox OPNSense network
-
-
+                  # - name: vmbr3
+                  #   autoStart: true
+                  #   comment: Proxmox OPNSense network
+        management:
+          name: "alps"
+          dataStoreId: local-lvm
+          lxcTemplateFileId: local:vztmpl/ubuntu-25.04-1.1_amd64.tar.zst
+          network:
+            lanBridgeId: "vmbr0"
   network:
     value:
-      domain: home.hooper.co.uk 
+      domain: home.hooper.co.uk
+packages:
+  technitium:
+    source: terraform-provider
+    version: 1.0.0
+    parameters:
+      - kenske/technitium

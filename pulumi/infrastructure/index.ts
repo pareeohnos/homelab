@@ -1,12 +1,15 @@
 require("dotenv").config({
-  path: "../.env",
+  path: "../../.env",
 });
 
+// Network
 import { networkBridges, networkVlans } from "./network/network";
 import { routerVm } from "./network/router";
 import { dnsServerContainer } from "./network/dns";
 import { unifiControllerContainer } from "./network/unifi_controller";
-import { connerVm } from "./network/conner";
+
+// Management
+import { homeAssistantVm } from "./management/home_assistant";
 
 /**
  * Network host
@@ -19,7 +22,6 @@ export const himalayasVlans = networkVlans;
 export const himalayasRouterVm = routerVm;
 export const himalayasDnsServer = dnsServerContainer;
 export const himalayasUnifiController = unifiControllerContainer;
-export const conner = connerVm;
 
 /**
  * Management host
@@ -28,3 +30,4 @@ export const conner = connerVm;
  * VM's for the management and running of the rest of the homelabe. For example,
  * a kubernetes master node, HomeAssistant, Git etc
  **/
+export const managementHomeAssistantVm = homeAssistantVm;

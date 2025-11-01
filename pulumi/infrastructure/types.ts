@@ -2,12 +2,14 @@ import { NetworkBridgeArgs } from "@muhlba91/pulumi-proxmoxve/network";
 
 export enum ProxmoxNodeNames {
   NETWORKING = "networking",
+  MANAGEMENT = "management",
 }
 
 export enum Hosts {
   DNS = "dns",
   ROUTER = "router",
   UNIFI = "unifiController",
+  HOME_ASSISTANT = "homeAssistant",
 }
 
 export interface GeneralConfiguration {
@@ -30,6 +32,8 @@ interface ProxmoxNetworkConfiguration {
 
 interface ProxmoxNodeConfiguration {
   name: string;
+  dataStoreId: string;
+  lxcTemplateFileId: string;
   network: ProxmoxNetworkConfiguration;
 }
 
@@ -39,8 +43,6 @@ type ProxmoxNodesConfiguration = Record<
 >;
 
 export interface ProxmoxConfiguration {
-  dataStoreId: string;
-  lxcTemplateFileId: string;
   nodes: ProxmoxNodesConfiguration;
 }
 

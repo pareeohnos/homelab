@@ -2,18 +2,18 @@ import * as pulumi from "@pulumi/pulumi";
 import * as proxmox from "@muhlba91/pulumi-proxmoxve";
 import provider from "./provider";
 import { HostsConfiguration, ProxmoxConfiguration } from "../types";
-import { networkBridges } from "./network";
 
 const config = new pulumi.Config();
 
 const proxmoxConfig = config.requireObject<ProxmoxConfiguration>("proxmox");
 const hostsConfig = config.requireObject<HostsConfiguration>("hosts");
+const nodeConfig = proxmoxConfig.nodes.management;
 
-export const connerVm = new proxmox.vm.VirtualMachine(
-  "connerKubernetes",
+export const homeAssistantVm = new proxmox.vm.VirtualMachine(
+  "homeAssistantVm",
   {
-    nodeName: proxmoxConfig.nodes.networking.name,
-    name: "vm-conner-01",
+    nodeName: nodeConfig.name,
+    name: hostsConfig.homeAssistant.hostname,
     bios: "ovmf",
     cpu: {
       cores: 4,
@@ -25,13 +25,13 @@ export const connerVm = new proxmox.vm.VirtualMachine(
     },
     cdrom: {
       enabled: false,
-      // fileId: "local:iso/ubuntu-24.04.2-live-server-amd64.iso",
+      // fileId: "local:iso/OPNsense-25.1-dvd-amd64.iso",
       interface: "ide0",
     },
-    description: "Kubernetes for Conner",
+    description: "Home assistant home automation",
     disks: [
       {
-        datastoreId: proxmoxConfig.dataStoreId,
+        datastoreId: nodeConfig.dataStoreId,
         interface: "scsi0",
         size: 64,
         discard: "on",
@@ -42,25 +42,27 @@ export const connerVm = new proxmox.vm.VirtualMachine(
       },
     ],
     efiDisk: {
-      datastoreId: proxmoxConfig.dataStoreId,
+      datastoreId: nodeConfig.dataStoreId,
       type: "4m",
       preEnrolledKeys: true,
     },
     keyboardLayout: "en-gb",
-    networkDevices: [{
-      disconnected: false,
-      bridge: "vmbr2",
-      firewall: false,
-      vlanId: 70,
-      model: "virtio",
-      queues: 4
-    }],
+    networkDevices: [
+      {
+        bridge: "vmbr0",
+        disconnected: false,
+        enabled: true,
+        firewall: false,
+        model: "virtio",
+        queues: 4,
+      },
+    ],
     onBoot: true,
     operatingSystem: {
       type: "l26",
     },
     started: true,
-    tags: (hostsConfig.router.tags ?? []).sort(),
+    tags: (hostsConfig.homeAssistant.tags ?? []).sort(),
   },
   { provider },
 );
