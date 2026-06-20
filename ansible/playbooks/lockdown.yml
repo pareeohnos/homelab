@@ -1,5 +1,5 @@
 - name: Lockdown
-  hosts: bootstrap
+  hosts: lockdown
   gather_facts: yes
   remote_user: root
   roles:

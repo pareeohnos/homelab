@@ -1,5 +1,10 @@
 # Homelab
 
+## More detailed docs
+
+[Proxmox](./docs/PROXMOX.md)
+[Home Assistant](./docs/HOME_ASSISTANT.md)
+
 Home consists of
 
 - OPNSense router
@@ -47,12 +52,18 @@ Key URLs
 
 - Home assistant - `vm-home-assistant-01`, 10.0.70.2 VLAN 70
 
-- OPNSense
-
 ## 1. Preparation
 
 The below steps are required before everything can be setup. For any of the
 steps involving Proxmox, it will need repeating for each proxmox host.
+
+### Dependencies
+
+The machine running all of the commands will require the following thigs:
+
+- pulumi
+- ansible
+- wget
 
 ### LXC template
 
@@ -140,6 +151,34 @@ Go into BIOS of VM and disable secure boot.
 
 Import config xml file
 
+## Configure HomeAssistant network
+
+Home assistant is an absolute pain in the ass, and refuse to provide an medium
+to install the OS. Instead they only provide a disk image that you have to 
+import. This means that the OS comes pre-installed and has to be manually
+configured with the network configuration. To do this, load up proxmox and open
+the console.
+
+```bash
+login
+
+# Make sure it's using the right hostname
+ha host options --hostname vm-home-assistant-01.home.hooper.co.uk
+
+# Now we'll update the network settings
+nmcli con show
+
+# Get the name of the network connection shown above
+nmcli con edit "put that name here"
+
+nmcli> set ipv4.addresses 10.0.70.2/32
+nmcli> set ipv4.dns 10.0.70.1
+nmcli> set ipv4.gateway 10.0.70.1
+nmcli> save
+```
+
+Reboot and it should be good to go
+
 ## Software
 
 Now we're on to Ansible. First things first, grab any dependencies we have. The
@@ -219,6 +258,25 @@ Some useful bits of info
 
 - Default `proxmox` username is `root`
 - Default `technitium` username is `admin`
+
+## Lockdown
+
+Ansible includes a playbook to lockdown hosts. This is configured for all hosts, however if new hosts are added then it will fail to run as it will no longer be able to connect to hosts with the `root` user.
+
+To fix, ensure that the host is added into the inventory file under the `[lockdown]` block. Then run the playbook but specify just the host to lockdown
+
+```bash
+ansible-playbook playbooks/lockdown.yml -l <new host ip>
+```
+
+**NOTE** The lockdown playbook will create new ansible users. For proxmox hosts however, an additional step is required from within the Proxmox UI to make them have full access.
+
+In the UI, go to `Datacenter > Permissions > Users` and make sure to add the `ansible` user as a PAM user.
+
+Then in `Datacenter > Permissions` create a new permission for the `/` path for that user, with admin rights.
+
+Lastly, the proxmox CLI tools require sudo, but `sudo` isn't installed by default. In the console in the web UI, install sudo with `apt install sudo`.
+
 
 ## Troublshooting
 

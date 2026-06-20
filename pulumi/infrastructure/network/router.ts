@@ -25,7 +25,7 @@ export const routerVm = new proxmox.vm.VirtualMachine(
       dedicated: 4096,
     },
     cdrom: {
-      enabled: false,
+      fileId: "none",
       // fileId: "local:iso/OPNsense-25.1-dvd-amd64.iso",
       interface: "ide0",
     },

@@ -12,6 +12,16 @@ config:
           type: "Primary"
           records:
             - type: "A"
+              ipAddress: "10.0.10.254"
+              hostname: "pm-himalayas"
+              comments: "Himalayas Proxmox (Networking)"
+
+            - type: "A"
+              ipAddress: "10.0.10.253"
+              hostname: "pm-alps"
+              comments: "Alps Proxmox (Management)"
+
+            - type: "A"
               ipAddress: "10.0.10.1"
               hostname: "vm-router-01"
               comments: "OPNSense router"

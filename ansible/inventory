@@ -1,8 +1,14 @@
-[bootstrap]
+[lockdown]
 # Use IP addresses here, as during the bootstrap phase we don't have a DNS
 # server running yet, so we can't use hostnames
 10.0.10.2 # DNS
 10.0.10.3 # Unifi controller
+
+10.0.10.254 # Himalays
+10.0.10.253 # Alps
+
+[home_assistant]
+pm-alps.home.hooper.co.uk ansible_user=ansible
 
 [bootstrap_dns]
 10.0.10.2

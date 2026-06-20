@@ -31,11 +31,16 @@ export const buildLxcConfiguration = (
         cores: 1,
       },
       disk: {
+        acl: false,
         datastoreId: nodeConfig.dataStoreId,
+        mountOptions: [],
+        quota: false,
+        replicate: false,
         size: 8,
       },
       features: {
         nesting: true,
+        mounts: [],
       },
       initialization: {
         dns: {

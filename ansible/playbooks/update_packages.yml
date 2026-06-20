@@ -1,5 +1,5 @@
 - name: Update system packages
-  hosts: all:!bootstrap
+  hosts: all:!lockdown
   gather_facts: yes
   remote_user: ansible
   roles:
