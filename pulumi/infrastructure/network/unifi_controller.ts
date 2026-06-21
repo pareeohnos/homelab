@@ -12,7 +12,7 @@ import {
   ProxmoxNodeNames,
   ProxmoxConfiguration,
 } from "../types";
-import { buildLxcConfiguration } from "./lxc_config";
+import { buildLxcConfiguration } from "../lxc_config";
 
 const config = new pulumi.Config();
 

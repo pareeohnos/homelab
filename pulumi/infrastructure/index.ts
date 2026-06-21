@@ -10,6 +10,8 @@ import { unifiControllerContainer } from "./network/unifi_controller";
 
 // Management
 import { homeAssistantVm } from "./management/home_assistant";
+import { nzbgetContainer } from "./management/nzbget";
+import { sonarrContainer, radarrContainer } from "./management/the_arrs";
 
 /**
  * Network host
@@ -31,3 +33,6 @@ export const himalayasUnifiController = unifiControllerContainer;
  * a kubernetes master node, HomeAssistant, Git etc
  **/
 export const managementHomeAssistantVm = homeAssistantVm;
+export const managementSonarrContainer = sonarrContainer;
+export const managementRadarrContainer = radarrContainer;
+export const managementNzggetContainer = nzbgetContainer;

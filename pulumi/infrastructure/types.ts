@@ -6,10 +6,16 @@ export enum ProxmoxNodeNames {
 }
 
 export enum Hosts {
+  // Networking hosts
   DNS = "dns",
   ROUTER = "router",
   UNIFI = "unifiController",
+
+  // Management hosts
   HOME_ASSISTANT = "homeAssistant",
+  SONARR = "sonarr",
+  RADARR = "radarr",
+  NZB_GET = "nzbget",
 }
 
 export interface GeneralConfiguration {

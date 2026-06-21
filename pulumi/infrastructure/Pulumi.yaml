@@ -39,6 +39,27 @@ config:
         tags:
           - vm
           - homelab
+      sonarr:
+        hostname: lxc-sonarr-01
+        ipAddress: 10.0.40.2
+        vlanId: 40
+        tags:
+          - container
+          - media
+      radarr:
+        hostname: lxc-radarr-01
+        ipAddress: 10.0.40.3
+        vlanId: 40
+        tags:
+          - container
+          - media
+      nzbget:
+        hostname: lxc-nzbget-01
+        ipAddress: 10.0.40.4
+        vlanId: 40
+        tags:
+          - container
+          - media
   proxmox:
     value:
       nodes:

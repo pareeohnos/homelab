@@ -6,13 +6,14 @@ import {
   NetworkConfiguration,
   ProxmoxConfiguration,
   ProxmoxNodeNames,
-} from "../types";
-import { getSshKey } from "../utils";
+} from "./types";
+import { getSshKey } from "./utils";
 
 export const buildLxcConfiguration = (
   proxmoxNode: ProxmoxNodeNames,
   hostname: Hosts,
   overrides?: Partial<ContainerArgs>,
+  templatefileId?: String | pulumi.OutputInstance<String>,
 ): ContainerArgs => {
   const config = new pulumi.Config();
   const proxmoxConfig = config.requireObject<ProxmoxConfiguration>("proxmox");
@@ -70,7 +71,7 @@ export const buildLxcConfiguration = (
       ],
       nodeName: nodeConfig.name,
       operatingSystem: {
-        templateFileId: nodeConfig.lxcTemplateFileId,
+        templateFileId: templatefileId || nodeConfig.lxcTemplateFileId,
         type: "ubuntu",
       },
       protection: true,
