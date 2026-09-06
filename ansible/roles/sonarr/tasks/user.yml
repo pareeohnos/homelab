@@ -1,0 +1,24 @@
+---
+- name: Create sonarr group
+  become: true
+  group:
+    name: "{{ sonarr_group }}"
+    state: present
+
+- name: Create sonarr system user
+  become: true
+  user:
+    name: "{{ sonarr_user }}"
+    group: "{{ sonarr_group }}"
+    system: true
+    create_home: false
+    shell: /usr/sbin/nologin
+
+- name: Create AppData directory
+  become: true
+  file:
+    path: "{{ sonarr_datadir }}"
+    state: directory
+    owner: "{{ sonarr_user }}"
+    group: "{{ sonarr_group }}"
+    mode: '0775'

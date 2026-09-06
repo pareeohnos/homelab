@@ -1,0 +1,44 @@
+---
+- name: Ensure backup directory exists
+  file:
+    path: "{{ sonarr_backup_dir }}"
+    state: directory
+    mode: '0750'
+
+- name: Stop Sonarr service before backup
+  systemd:
+    name: sonarr
+    state: stopped
+
+- name: Set backup timestamp
+  set_fact:
+    sonarr_backup_timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
+
+- name: Archive current binaries
+  archive:
+    path: "{{ sonarr_bindir }}"
+    dest: "{{ sonarr_backup_dir }}/sonarr-bin-{{ sonarr_installed_version }}-{{ sonarr_backup_timestamp }}.tar.gz"
+    format: gz
+
+# Data (config.xml, sonarr.db) is what actually matters to preserve —
+# binaries are disposable and re-downloadable, the database isn't.
+- name: Archive current AppData (config/database)
+  archive:
+    path: "{{ sonarr_datadir }}"
+    dest: "{{ sonarr_backup_dir }}/sonarr-data-{{ sonarr_installed_version }}-{{ sonarr_backup_timestamp }}.tar.gz"
+    format: gz
+
+- name: Find old backups
+  find:
+    paths: "{{ sonarr_backup_dir }}"
+    patterns: "sonarr-*.tar.gz"
+    age: "0s"
+  register: sonarr_backups
+
+- name: Prune old backups beyond retention count
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ (sonarr_backups.files | sort(attribute='mtime', reverse=true))[(sonarr_keep_backups * 2):] }}"
+  loop_control:
+    label: "{{ item.path }}"

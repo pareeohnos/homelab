@@ -1,0 +1,50 @@
+---
+- name: Read current Sonarr version from local API
+  uri:
+    url: "http://localhost:{{ sonarr_port }}/api/v3/system/status?apikey={{ sonarr_api_key }}"
+    return_content: true
+  register: sonarr_status_response
+  failed_when: false
+
+- name: Set installed version fact
+  set_fact:
+    sonarr_installed_version: "{{ (sonarr_status_response.json.version | default('0.0.0.0')) }}"
+
+- name: Determine system architecture
+  command: dpkg --print-architecture
+  register: dpkg_arch
+  changed_when: false
+
+- name: Map dpkg architecture to Sonarr arch parameter
+  set_fact:
+    sonarr_arch: >-
+      {{ 'x64' if dpkg_arch.stdout == 'amd64' else
+         'arm' if dpkg_arch.stdout == 'armhf' else
+         'arm64' if dpkg_arch.stdout == 'arm64' else
+         'unsupported' }}
+
+- name: Fail if architecture is unsupported
+  fail:
+    msg: "Architecture {{ dpkg_arch.stdout }} is not supported by Sonarr"
+  when: sonarr_arch == 'unsupported'
+
+- name: Check latest available version metadata
+  uri:
+    url: "https://services.sonarr.tv/v1/update/{{ sonarr_branch }}/changes?version=4&os=linux&arch={{ sonarr_arch }}"
+    return_content: true
+  register: sonarr_latest_response
+
+- name: Set latest version fact
+  set_fact:
+    sonarr_latest_version: "{{ sonarr_latest_response.json[0].version }}"
+
+- name: Set update-available flag
+  set_fact:
+    sonarr_update_available: "{{ sonarr_installed_version != sonarr_latest_version }}"
+
+- name: Report version status
+  debug:
+    msg: >-
+      Installed: {{ sonarr_installed_version }},
+      Latest: {{ sonarr_latest_version }},
+      Update needed: {{ sonarr_update_available }}

@@ -1,0 +1,24 @@
+---
+- name: Check that Sonarr config.xml exists
+  stat:
+    path: "{{ sonarr_datadir }}/config.xml"
+  register: sonarr_config_file
+
+- name: Fail if config.xml is missing (Sonarr not yet installed/run)
+  fail:
+    msg: "Could not find {{ sonarr_datadir }}/config.xml — has Sonarr been installed and started at least once?"
+  when: not sonarr_config_file.stat.exists
+
+- name: Read config.xml contents
+  slurp:
+    src: "{{ sonarr_datadir }}/config.xml"
+  register: sonarr_config_raw
+
+- name: Extract API key from config.xml
+  set_fact:
+    sonarr_api_key: "{{ (sonarr_config_raw.content | b64decode) | regex_search('<ApiKey>(.*?)</ApiKey>', '\\1') | first }}"
+
+- name: Fail if API key could not be extracted
+  fail:
+    msg: "Failed to extract API key from config.xml"
+  when: sonarr_api_key | length == 0

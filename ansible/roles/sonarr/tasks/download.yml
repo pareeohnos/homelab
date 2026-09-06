@@ -1,0 +1,33 @@
+---
+- name: Determine system architecture
+  command: dpkg --print-architecture
+  register: dpkg_arch
+  changed_when: false
+
+- name: Map dpkg architecture to Sonarr arch parameter
+  set_fact:
+    sonarr_arch: >-
+      {{ 'x64' if dpkg_arch.stdout == 'amd64' else
+         'arm' if dpkg_arch.stdout == 'armhf' else
+         'arm64' if dpkg_arch.stdout == 'arm64' else
+         'unsupported' }}
+
+- name: Fail if architecture is unsupported
+  fail:
+    msg: "Architecture {{ dpkg_arch.stdout }} is not supported by Sonarr"
+  when: sonarr_arch == 'unsupported'
+
+- name: Stop Sonarr service if currently running (e.g. upgrade scenario)
+  systemd:
+    name: sonarr
+    state: stopped
+  failed_when: false
+  register: sonarr_stop_result
+  changed_when: sonarr_stop_result.status is defined
+
+- name: Download and extract Sonarr release
+  unarchive:
+    src: "https://services.sonarr.tv/v1/download/{{ sonarr_branch }}/latest?version=4&os=linux&arch={{ sonarr_arch }}"
+    dest: /tmp
+    remote_src: true
+  register: sonarr_extract

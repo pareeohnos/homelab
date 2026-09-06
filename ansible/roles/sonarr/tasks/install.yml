@@ -1,0 +1,30 @@
+---
+- name: Remove existing Sonarr installation
+  become: true
+  file:
+    path: "{{ sonarr_bindir }}"
+    state: absent
+
+- name: Move extracted Sonarr files into install directory
+  become: true
+  command: mv /tmp/Sonarr "{{ sonarr_installdir }}"
+  args:
+    creates: "{{ sonarr_bindir }}"
+
+- name: Set ownership and permissions on install directory
+  become: true
+  file:
+    path: "{{ sonarr_bindir }}"
+    owner: "{{ sonarr_user }}"
+    group: "{{ sonarr_group }}"
+    mode: '0775'
+    recurse: true
+
+- name: Flag update_required so Sonarr checks for updates on first run
+  become: true
+  file:
+    path: "{{ sonarr_datadir }}/update_required"
+    state: touch
+    owner: "{{ sonarr_user }}"
+    group: "{{ sonarr_group }}"
+    mode: '0664'

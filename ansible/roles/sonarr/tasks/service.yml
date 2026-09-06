@@ -1,0 +1,45 @@
+---
+- name: Deploy systemd unit file for Sonarr
+  become: true
+  copy:
+    dest: /etc/systemd/system/sonarr.service
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Sonarr Daemon
+      After=syslog.target network.target
+
+      [Service]
+      User={{ sonarr_user }}
+      Group={{ sonarr_group }}
+      UMask={{ sonarr_umask }}
+      Type=simple
+      ExecStart={{ sonarr_bindir }}/Sonarr -nobrowser -data={{ sonarr_datadir }}
+      TimeoutStopSec=20
+      KillMode=process
+      Restart=on-failure
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: reload systemd
+
+- name: Enable and start Sonarr service
+  become: true
+  systemd:
+    name: sonarr
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Wait for Sonarr to become active
+  become: true
+  systemd:
+    name: sonarr
+  register: sonarr_status
+  until: sonarr_status.status.ActiveState == "active"
+  retries: 10
+  delay: 2
+
+- name: Show access URL
+  debug:
+    msg: "Sonarr is running — browse to http://{{ ansible_default_ipv4.address }}:{{ sonarr_port }}"

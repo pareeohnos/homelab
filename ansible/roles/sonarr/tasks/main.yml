@@ -1,0 +1,23 @@
+---
+- name: Install prerequisites
+  include_tasks: prerequisites.yml
+
+- name: Create user and group
+  include_tasks: user.yml
+
+- name: Download and extract Sonarr
+  include_tasks: download.yml
+
+- name: Install Sonarr
+  include_tasks: install.yml
+
+- name: Configure and start Sonarr service
+  include_tasks: service.yml
+
+- name: Setup reverse proxy
+  include_role:
+    name: caddy
+  vars:
+    caddy_url: lxc-sonarr-01.home.hooper.co.uk
+    caddy_ports:
+      - port: 8989

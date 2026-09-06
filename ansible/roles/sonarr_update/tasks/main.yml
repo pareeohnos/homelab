@@ -1,0 +1,22 @@
+---
+- name: Read Sonarr API key from config.xml
+  include_tasks: api_key.yml
+
+- name: Check installed vs latest version
+  include_tasks: check_version.yml
+
+- name: Back up current installation
+  include_tasks: backup.yml
+  when: sonarr_update_available
+
+- name: Download latest Sonarr release
+  include_tasks: download.yml
+  when: sonarr_update_available
+
+- name: Deploy new version
+  include_tasks: deploy.yml
+  when: sonarr_update_available
+
+- name: Verify Sonarr is running post-update
+  include_tasks: verify.yml
+  when: sonarr_update_available

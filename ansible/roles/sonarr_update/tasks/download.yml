@@ -1,0 +1,6 @@
+---
+- name: Download and extract new Sonarr release
+  unarchive:
+    src: "https://services.sonarr.tv/v1/download/{{ sonarr_branch }}/latest?version=4&os=linux&arch={{ sonarr_arch }}"
+    dest: /tmp
+    remote_src: true

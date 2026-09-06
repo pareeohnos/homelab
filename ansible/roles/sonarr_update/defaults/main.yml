@@ -1,0 +1,10 @@
+---
+sonarr_user: sonarr
+sonarr_group: media
+sonarr_installdir: /opt
+sonarr_bindir: "{{ sonarr_installdir }}/Sonarr"
+sonarr_datadir: /var/lib/sonarr/
+sonarr_branch: main
+sonarr_backup_dir: /var/backups/sonarr
+sonarr_keep_backups: 3
+sonarr_port: 8989

@@ -1,0 +1,23 @@
+---
+- name: Remove old binaries
+  file:
+    path: "{{ sonarr_bindir }}"
+    state: absent
+
+- name: Move new binaries into install directory
+  command: mv /tmp/Sonarr "{{ sonarr_installdir }}"
+  args:
+    creates: "{{ sonarr_bindir }}"
+
+- name: Set ownership and permissions on install directory
+  file:
+    path: "{{ sonarr_bindir }}"
+    owner: "{{ sonarr_user }}"
+    group: "{{ sonarr_group }}"
+    mode: '0775'
+    recurse: true
+
+- name: Start Sonarr service
+  systemd:
+    name: sonarr
+    state: started

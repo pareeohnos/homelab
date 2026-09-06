@@ -1,0 +1,21 @@
+---
+- name: Wait for Sonarr to become active
+  systemd:
+    name: sonarr
+  register: sonarr_post_update_status
+  until: sonarr_post_update_status.status.ActiveState == "active"
+  retries: 10
+  delay: 2
+
+- name: Confirm new version via API
+  uri:
+    url: "http://localhost:{{ sonarr_port }}/api/v3/system/status?apikey={{ sonarr_api_key }}"
+    return_content: true
+  register: sonarr_verify_response
+  until: sonarr_verify_response.json.version == sonarr_latest_version
+  retries: 10
+  delay: 3
+
+- name: Report update result
+  debug:
+    msg: "Sonarr updated to version {{ sonarr_verify_response.json.version }}"
