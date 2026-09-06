@@ -1,0 +1,7 @@
+- name: Configure unattended upgrades
+  hosts: unattended_upgradable
+  gather_facts: yes
+  remote_user: ansible
+  become: true
+  roles:
+    - unattended_upgrades

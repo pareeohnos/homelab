@@ -1,0 +1,43 @@
+---
+- name: Assert this role only supports Debian-family (apt) hosts
+  assert:
+    that:
+      - ansible_os_family == "Debian"
+    fail_msg: "unattended_upgrades role only supports Debian/Ubuntu hosts."
+
+- name: Install unattended-upgrades and apt-listchanges
+  apt:
+    name:
+      - unattended-upgrades
+      - apt-listchanges
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Configure which updates are applied automatically
+  template:
+    src: 50unattended-upgrades.j2
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "apt-config -c=%s dump"
+  notify: restart unattended-upgrades service
+
+- name: Configure the periodic apt schedule
+  template:
+    src: 20auto-upgrades.j2
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "apt-config -c=%s dump"
+
+- name: Ensure the apt-daily systemd timers are enabled and running
+  systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - apt-daily.timer
+    - apt-daily-upgrade.timer

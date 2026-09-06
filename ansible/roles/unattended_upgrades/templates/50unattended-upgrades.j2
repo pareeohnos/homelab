@@ -1,0 +1,31 @@
+// Managed by Ansible (unattended_upgrades role) - do not edit by hand.
+
+Unattended-Upgrade::Origins-Pattern {
+{% if unattended_upgrades_origins | length > 0 %}
+{% for origin in unattended_upgrades_origins %}
+    "{{ origin }}";
+{% endfor %}
+{% else %}
+    // Stock security-only origins. ${distro_id} / ${distro_codename} are
+    // substituted by unattended-upgrades itself at runtime - this works
+    // unmodified on both Debian and Ubuntu.
+    "origin=Debian,codename=${distro_codename},label=Debian-Security";
+    "origin=Debian,codename=${distro_codename}-security,label=Debian-Security";
+    "origin=Ubuntu,archive=${distro_codename}-security";
+{% endif %}
+};
+
+Unattended-Upgrade::Package-Blacklist {
+{% for pkg in unattended_upgrades_blacklist %}
+    "{{ pkg }}";
+{% endfor %}
+};
+
+Unattended-Upgrade::Remove-Unused-Dependencies "{{ unattended_upgrades_remove_unused_deps | lower }}";
+Unattended-Upgrade::Automatic-Reboot "{{ unattended_upgrades_auto_reboot | lower }}";
+Unattended-Upgrade::Automatic-Reboot-Time "{{ unattended_upgrades_auto_reboot_time }}";
+
+{% if unattended_upgrades_mail_to %}
+Unattended-Upgrade::Mail "{{ unattended_upgrades_mail_to }}";
+Unattended-Upgrade::MailOnlyOnError "{{ unattended_upgrades_mail_only_on_error | lower }}";
+{% endif %}

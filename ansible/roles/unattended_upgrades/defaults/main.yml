@@ -1,0 +1,49 @@
+---
+# ---------------------------------------------------------------------------
+# unattended_upgrades role defaults
+#
+# This role is meant to be pulled in by OTHER roles (as a meta dependency or
+# via include_role) rather than added directly to a playbook. All variables
+# are namespaced with unattended_upgrades_ so they're safe to set from a
+# parent role's vars: block without colliding with anything else.
+# ---------------------------------------------------------------------------
+
+# Master on/off switch. When false, the role still installs and configures
+# unattended-upgrades but sets APT::Periodic::Unattended-Upgrade to "0", so
+# nothing actually auto-applies. Useful for staging a rollout.
+unattended_upgrades_enable: true
+
+# Origin patterns to auto-upgrade from. Empty list (default) uses the
+# standard security-only origins for Debian/Ubuntu via unattended-upgrades'
+# own ${distro_id}/${distro_codename} substitution - works unmodified on
+# both distros, no ansible_distribution facts needed.
+#
+# To also pull in non-security updates (not just security), add e.g.
+# "origin=Ubuntu,archive=${distro_codename}-updates" to this list.
+unattended_upgrades_origins: []
+
+# Packages to NEVER auto-upgrade regardless of origin match. Good for
+# anything you want to bump on your own schedule/testing.
+unattended_upgrades_blacklist: []
+
+# Remove packages left with no reverse-dependencies after an upgrade.
+unattended_upgrades_remove_unused_deps: true
+
+# Reboot automatically when an upgrade needs it (e.g. new kernel). Off by
+# default - most homelab services are stateful enough that you want to pick
+# the reboot window yourself. If enabled, reboot only happens at the time
+# below, not immediately.
+unattended_upgrades_auto_reboot: false
+unattended_upgrades_auto_reboot_time: "02:00"
+
+# Email a report after each run. Blank = disabled. Requires a working
+# local MTA/relay on the host - this role does not configure one.
+unattended_upgrades_mail_to: ""
+unattended_upgrades_mail_only_on_error: true
+
+# How often (days) apt refreshes package lists / downloads / applies
+# upgrades / cleans its cache. 1 = daily (the Debian/Ubuntu stock default).
+unattended_upgrades_update_interval: 1
+unattended_upgrades_download_interval: 1
+unattended_upgrades_upgrade_interval: 1
+unattended_upgrades_autoclean_interval: 7
