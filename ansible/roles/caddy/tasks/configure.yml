@@ -1,0 +1,52 @@
+---
+- name: Create Caddy config directory
+  ansible.builtin.file:
+    path: "{{ caddy_config_dir }}"
+    state: directory
+    owner: "{{ caddy_user }}"
+    group: "{{ caddy_group }}"
+    mode: "0750"
+  become: true
+
+- name: Create Caddy data directory
+  ansible.builtin.file:
+    path: "{{ caddy_data_dir }}"
+    state: directory
+    owner: "{{ caddy_user }}"
+    group: "{{ caddy_group }}"
+    mode: "0750"
+  become: true
+
+- name: Deploy Cloudflare API credentials env file
+  ansible.builtin.template:
+    src: cloudflare.env.j2
+    dest: "{{ caddy_config_dir }}/cloudflare.env"
+    owner: "{{ caddy_user }}"
+    group: "{{ caddy_group }}"
+    mode: "0600"
+  become: true
+  no_log: true
+  notify: restart caddy
+
+- name: Deploy Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: "{{ caddy_caddyfile }}"
+    owner: "{{ caddy_user }}"
+    group: "{{ caddy_group }}"
+    mode: "0640"
+    # `validate` runs against a randomly-named temp file (not the final
+    # Caddyfile path), so Caddy can't infer the adapter from the filename -
+    # it must be pinned explicitly or it falls back to (and fails) JSON.
+    #
+    # `caddy validate` provisions the full config, including the Cloudflare
+    # DNS module, so it needs CF_API_TOKEN too. Ansible's `validate` runs
+    # this as a bare subprocess over SSH - it never goes through systemd, so
+    # EnvironmentFile= from the service unit doesn't apply here. The
+    # cloudflare.env file is already deployed by the previous task, so
+    # source it into a shell explicitly instead.
+    validate: >-
+      bash -c 'set -a; source {{ caddy_config_dir }}/cloudflare.env; set +a;
+      {{ caddy_install_dir }}/caddy validate --adapter caddyfile --config %s'
+  become: true
+  notify: reload caddy

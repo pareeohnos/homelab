@@ -1,0 +1,67 @@
+---
+# ---------------------------------------------------------------------------
+# caddy role defaults
+#
+# Meant to be pulled into OTHER roles (via include_role/dependency) to stand
+# up a Caddy reverse proxy in front of that role's service. All variables
+# are namespaced with caddy_ so they're safe to set from a parent role's
+# vars: block. At minimum, the consuming role should set caddy_url and
+# caddy_ports, e.g.:
+#
+#   - name: Reverse proxy with Caddy
+#     include_role:
+#       name: caddy
+#     vars:
+#       caddy_url: sonarr.home.hooper.co.uk
+#       caddy_ports:
+#         - port: 8989
+#
+# caddy_ports entries are rendered as `handle` blocks in the order given, so
+# if you mix path-specific entries with a catch-all, list the path-specific
+# ones first (Caddy evaluates handle blocks in order, first match wins):
+#
+#   caddy_ports:
+#     - port: 9898
+#       path: /api/*
+#     - port: 8989   # catch-all, no path - must come last
+# ---------------------------------------------------------------------------
+
+# The public hostname Caddy will serve and request a TLS cert for.
+caddy_url: ""
+
+# Upstream ports to reverse proxy to. `host` defaults to caddy_upstream_host
+# (the proxied service almost always runs on the same node). `path` is a
+# Caddy path matcher (e.g. "/api/*"); omit it for a catch-all handler.
+caddy_ports: []
+caddy_upstream_host: 127.0.0.1
+
+# Email for the ACME/Let's Encrypt account. Optional - leave blank to skip.
+caddy_acme_email: ""
+
+# System user/group Caddy runs as.
+caddy_user: caddy
+caddy_group: caddy
+
+caddy_install_dir: /usr/local/bin
+caddy_config_dir: /etc/caddy
+caddy_data_dir: /var/lib/caddy
+caddy_caddyfile: "{{ caddy_config_dir }}/Caddyfile"
+
+# Caddy has no official apt repo build with the Cloudflare DNS module, so we
+# fetch a custom build from Caddy's build server instead. Override
+# caddy_download_url directly if you need a pinned/offline build.
+caddy_dns_provider_module: github.com/caddy-dns/cloudflare
+caddy_os: linux
+caddy_arch_map:
+  x86_64: amd64
+  aarch64: arm64
+  armv7l: arm
+caddy_arch: "{{ caddy_arch_map[ansible_architecture] | default('amd64') }}"
+caddy_download_url: "https://caddyserver.com/api/download?os={{ caddy_os }}&arch={{ caddy_arch }}&p={{ caddy_dns_provider_module }}&idempotent=true"
+
+# Cloudflare API token for the DNS-01 challenge, sourced from the
+# vault-encrypted vars in ansible/group_vars/all/vault.yml (auto-loaded by
+# Ansible for every host - just run with --ask-vault-pass or
+# --vault-password-file). No account ID is needed here: the caddy-dns/
+# cloudflare module only takes an API token, which is already zone-scoped.
+caddy_cloudflare_api_token: "{{ letsencrypt_cloudflare_api_token }}"

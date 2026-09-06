@@ -1,0 +1,41 @@
+---
+- name: Create caddy group
+  ansible.builtin.group:
+    name: "{{ caddy_group }}"
+    system: true
+  become: true
+
+- name: Create caddy user
+  ansible.builtin.user:
+    name: "{{ caddy_user }}"
+    group: "{{ caddy_group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    home: "{{ caddy_data_dir }}"
+    create_home: false
+  become: true
+
+- name: Ensure libcap2-bin is installed (needed for setcap)
+  ansible.builtin.apt:
+    name: libcap2-bin
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+- name: Download Caddy binary with Cloudflare DNS module
+  ansible.builtin.get_url:
+    url: "{{ caddy_download_url }}"
+    dest: "{{ caddy_install_dir }}/caddy"
+    mode: "0755"
+    owner: root
+    group: root
+  become: true
+  notify: restart caddy
+
+- name: Grant caddy binary permission to bind privileged ports
+  community.general.capabilities:
+    path: "{{ caddy_install_dir }}/caddy"
+    capability: cap_net_bind_service+ep
+    state: present
+  become: true

@@ -1,0 +1,21 @@
+# Managed by Ansible (caddy role) - do not edit by hand.
+{% if caddy_acme_email %}
+{
+    email {{ caddy_acme_email }}
+}
+
+{% endif %}
+{{ caddy_url }} {
+    tls {
+        dns cloudflare {
+            api_token {env.CF_API_TOKEN}
+        }
+        resolvers 1.1.1.1
+    }
+
+{% for mapping in caddy_ports %}
+    handle{% if mapping.path is defined %} {{ mapping.path }}{% endif %} {
+        reverse_proxy {{ mapping.host | default(caddy_upstream_host) }}:{{ mapping.port }}
+    }
+{% endfor %}
+}

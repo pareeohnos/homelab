@@ -1,0 +1,22 @@
+---
+- name: Assert this role only supports Debian-family (apt) hosts
+  assert:
+    that:
+      - ansible_os_family == "Debian"
+    fail_msg: "caddy role only supports Debian/Ubuntu hosts."
+
+- name: Assert required variables are set
+  assert:
+    that:
+      - caddy_url | length > 0
+      - caddy_ports | length > 0
+    fail_msg: "caddy_url and caddy_ports must be set by the including role."
+
+- name: Install Caddy (with Cloudflare DNS module)
+  include_tasks: install.yml
+
+- name: Configure Caddy
+  include_tasks: configure.yml
+
+- name: Start and enable Caddy service
+  include_tasks: service.yml
