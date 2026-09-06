@@ -52,7 +52,7 @@ export const buildLxcConfiguration = (
           {
             ipv4: {
               address: `${hostConfig.ipAddress}/24`,
-              gateway: hostsConfig.router.ipAddress,
+              gateway: `10.0.${hostConfig.vlanId}.1`,
             },
           },
         ],
