@@ -14,7 +14,9 @@
     - name: Add ansible to sudoers
       copy:
         dest: "/etc/sudoers.d/ansible"
-        content: "ansible ALL=(ALL) NOPASSWD: ALL"
+        content: "ansible ALL=(ALL) NOPASSWD: ALL\n"
+        mode: "0440"
+        validate: "visudo -cf %s"
 
     - name: Create SSH folder
       file:
