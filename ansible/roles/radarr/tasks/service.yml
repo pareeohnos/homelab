@@ -1,0 +1,45 @@
+---
+- name: Deploy systemd unit file for Radarr
+  become: true
+  copy:
+    dest: /etc/systemd/system/radarr.service
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Radarr Daemon
+      After=syslog.target network.target
+
+      [Service]
+      User={{ radarr_user }}
+      Group={{ radarr_group }}
+      UMask={{ radarr_umask }}
+      Type=simple
+      ExecStart={{ radarr_bindir }}/Radarr -nobrowser -data={{ radarr_datadir }}
+      TimeoutStopSec=20
+      KillMode=process
+      Restart=on-failure
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: reload systemd
+
+- name: Enable and start Radarr service
+  become: true
+  systemd:
+    name: radarr
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Wait for Radarr to become active
+  become: true
+  systemd:
+    name: radarr
+  register: radarr_status
+  until: radarr_status.status.ActiveState == "active"
+  retries: 10
+  delay: 2
+
+- name: Show access URL
+  debug:
+    msg: "Radarr is running — browse to http://{{ ansible_default_ipv4.address }}:{{ radarr_port }}"

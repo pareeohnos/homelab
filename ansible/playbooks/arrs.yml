@@ -1,0 +1,14 @@
+- name: Deploy sonarr
+  hosts: sonarr
+  roles:
+    - sonarr
+
+- name: Deploy radarr
+  hosts: radarr
+  roles:
+    - radarr
+
+# - name: Deploy NZBGet
+#   hosts: nzbget
+#   roles:
+#     - nzbget

@@ -1,0 +1,30 @@
+---
+- name: Remove existing Radarr installation
+  become: true
+  file:
+    path: "{{ radarr_bindir }}"
+    state: absent
+
+- name: Move extracted Radarr files into install directory
+  become: true
+  command: mv /tmp/Radarr "{{ radarr_installdir }}"
+  args:
+    creates: "{{ radarr_bindir }}"
+
+- name: Set ownership and permissions on install directory
+  become: true
+  file:
+    path: "{{ radarr_bindir }}"
+    owner: "{{ radarr_user }}"
+    group: "{{ radarr_group }}"
+    mode: '0775'
+    recurse: true
+
+- name: Flag update_required so Radarr checks for updates on first run
+  become: true
+  file:
+    path: "{{ radarr_datadir }}/update_required"
+    state: touch
+    owner: "{{ radarr_user }}"
+    group: "{{ radarr_group }}"
+    mode: '0664'

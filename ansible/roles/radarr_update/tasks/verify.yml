@@ -1,0 +1,21 @@
+---
+- name: Wait for Radarr to become active
+  systemd:
+    name: radarr
+  register: radarr_post_update_status
+  until: radarr_post_update_status.status.ActiveState == "active"
+  retries: 10
+  delay: 2
+
+- name: Confirm new version via API
+  uri:
+    url: "http://localhost:{{ radarr_port }}/api/v3/system/status?apikey={{ radarr_api_key }}"
+    return_content: true
+  register: radarr_verify_response
+  until: radarr_verify_response.json.version == radarr_latest_version
+  retries: 10
+  delay: 3
+
+- name: Report update result
+  debug:
+    msg: "Radarr updated to version {{ radarr_verify_response.json.version }}"

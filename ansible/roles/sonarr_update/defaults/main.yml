@@ -1,5 +1,5 @@
 ---
-sonarr_user: sonarr
+sonarr_user: media
 sonarr_group: media
 sonarr_installdir: /opt
 sonarr_bindir: "{{ sonarr_installdir }}/Sonarr"

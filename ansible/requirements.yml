@@ -1,5 +1,6 @@
 collections:
   - name: community.general
+  - name: ansible.posix
 
 roles:
   - name: treykee.unifi_network_application

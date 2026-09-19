@@ -5,3 +5,19 @@
   become: true
   roles:
     - dns_update
+
+- name: Update radarr
+  hosts: radarr
+  gather_facts: yes
+  remote_user: ansible
+  become: true
+  roles:
+    - radarr_update
+
+- name: Update sonarr
+  hosts: sonarr
+  gather_facts: yes
+  remote_user: ansible
+  become: true
+  roles:
+    - sonarr_update

@@ -1,0 +1,9 @@
+---
+- name: Install prerequisite packages
+  become: true
+  apt:
+    name:
+      - curl
+      - sqlite3
+      - wget
+    update_cache: true

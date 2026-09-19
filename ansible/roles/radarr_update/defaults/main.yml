@@ -1,0 +1,10 @@
+---
+radarr_user: media
+radarr_group: media
+radarr_installdir: /opt
+radarr_bindir: "{{ radarr_installdir }}/Radarr"
+radarr_datadir: /var/lib/radarr/
+radarr_branch: master
+radarr_backup_dir: /var/backups/radarr
+radarr_keep_backups: 3
+radarr_port: 7878

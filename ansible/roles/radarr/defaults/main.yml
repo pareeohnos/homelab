@@ -1,16 +1,16 @@
 ---
-sonarr_user: media
-sonarr_group: media
+radarr_user: media
+radarr_group: media
 # Pinned rather than left to auto-assignment: sonarr, radarr, and nzbget
 # all share this NFS-mounted media directory, so their "media" user/group
 # needs to be numerically identical across containers - useradd/groupadd
 # picking "the next available system id" independently per container isn't
 # guaranteed to land on the same number twice.
-sonarr_uid: 2000
-sonarr_gid: 2000
-sonarr_installdir: /opt
-sonarr_bindir: "{{ sonarr_installdir }}/Sonarr"
-sonarr_datadir: /var/lib/sonarr/
-sonarr_branch: main
-sonarr_port: 8989
-sonarr_umask: "0002"
+radarr_uid: 2000
+radarr_gid: 2000
+radarr_installdir: /opt
+radarr_bindir: "{{ radarr_installdir }}/Radarr"
+radarr_datadir: /var/lib/radarr/
+radarr_branch: master
+radarr_port: 7878
+radarr_umask: "0002"

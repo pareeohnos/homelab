@@ -7,8 +7,15 @@
 10.0.10.254 # Himalays
 10.0.10.253 # Alps
 
+10.0.40.2 # Sonarr
+10.0.40.3 # Radarr
+10.0.40.4 # Nzbget
+
+[proxmox]
+alps ansible_host=10.0.10.253 ansible_user=ansible
+
 [home_assistant]
-pm-alps.home.hooper.co.uk ansible_user=ansible
+vm-home-assistant-01.home.hooper.co.uk ansible_user=ansible
 
 [bootstrap_dns]
 10.0.10.2
@@ -22,3 +29,18 @@ lxc-unifi-controller-01.home.hooper.co.uk ansible_user=ansible
 
 [unifi]
 lxc-unifi-controller-01.home.hooper.co.uk ansible_user=ansible
+
+[arrs]
+sonarr ansible_host=lxc-sonarr-01.home.hooper.co.uk ansible_user=ansible
+radarr ansible_host=lxc-radarr-01.home.hooper.co.uk ansible_user=ansible
+nzbget ansible_host=lxc-nzbget-01.home.hooper.co.uk ansible_user=ansible
+
+# These servers are fine to have unattended upgrades configured. Not all servers should
+# have this as there are some servers we don't want to accidentally take down in the
+# event of a failed upgrade
+[unattended_upgradable]
+lxc-dns-01.home.hooper.co.uk ansible_user=ansible
+lxc-unifi-controller-01.home.hooper.co.uk ansible_user=ansible
+sonarr ansible_host=lxc-sonarr-01.home.hooper.co.uk ansible_user=ansible
+radarr ansible_host=lxc-radarr-01.home.hooper.co.uk ansible_user=ansible
+nzbget ansible_host=lxc-nzbget-01.home.hooper.co.uk ansible_user=ansible

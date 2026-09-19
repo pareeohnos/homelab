@@ -1,0 +1,77 @@
+---
+# ---------------------------------------------------------------------------
+# nfs_mount role defaults
+#
+# Meant to be pulled into OTHER roles (via include_role) to mount one or
+# more NFS shares (e.g. from a NAS) via /etc/fstab. All variables are
+# namespaced with nfs_mount_ so they're safe to set from a parent role's
+# vars: block. At minimum, set nfs_mounts:
+#
+#   - name: Mount NAS media share
+#     include_role:
+#       name: nfs_mount
+#     vars:
+#       nfs_mounts:
+#         - src: nas.home.hooper.co.uk:/volume1/media
+#           path: /mnt/media
+#         - src: nas.home.hooper.co.uk:/volume1/downloads
+#           path: /mnt/downloads
+#           opts: "rw,noatime,_netdev,nofail"
+#
+# Each entry in nfs_mounts supports:
+#   src      (required) - "host:/export/path"
+#   path     (required) - local mount point, created if missing
+#   fstype   - defaults to nfs_mount_default_fstype
+#   opts     - defaults to nfs_mount_default_opts
+#   owner/group/mode - permissions for the mount point directory
+#                      (applied before mounting; defaults below)
+#
+# --- LXC mode ---
+# Unprivileged LXC containers can't mount NFS themselves (the mount()
+# syscall is denied regardless of what the NFS server allows). If this
+# role's play target is actually an LXC guest, set nfs_mount_lxc_host too -
+# the role then mounts the share on the Proxmox host instead and
+# bind-mounts it into the container via `pct set`, restarting the container
+# to apply it (new mount points don't take effect on an already-running
+# container):
+#
+#   - name: Mount NAS media share
+#     include_role:
+#       name: nfs_mount
+#     vars:
+#       nfs_mount_lxc_host: alps
+#       nfs_mounts:
+#         - src: nas.home.hooper.co.uk:/volume1/media
+#           path: /mnt/media
+#
+# The container's VMID is auto-detected on nfs_mount_lxc_host by matching
+# `pct list`'s Name column against this container's own hostname (Proxmox
+# sets these to the same value) - no need to hardcode it, so it can't go
+# stale if the container is ever recreated with a different VMID. Set
+# nfs_mount_lxc_vmid explicitly only if the container's hostname doesn't
+# match its Proxmox name.
+#
+# Each nfs_mounts entry additionally supports, in this mode:
+#   container_path - path inside the container, if it should differ from
+#                    the host-side path (defaults to the same path)
+#   lxc_mp_index   - which `pct` mp slot to use (defaults to the item's
+#                    position in the list) - override if a container
+#                    already has other mount points configured
+# ---------------------------------------------------------------------------
+
+nfs_mounts: []
+
+# _netdev tells systemd this is a network mount, so it waits for networking
+# before mounting at boot. nofail stops a temporarily-unreachable NAS from
+# blocking the whole boot - add it per-mount above if you want that
+# tradeoff (it means a service depending on the share can start before it's
+# actually mounted).
+# NFSv3 rather than v4 - the TrueNAS server here doesn't have NFSv4 set up
+# (pseudo-filesystem/fsid=0 root export), and v3 needs no special server
+# config for a straightforward homelab share like this.
+nfs_mount_default_fstype: nfs
+nfs_mount_default_opts: "rw,noatime,_netdev,vers=3"
+
+nfs_mount_dir_owner: root
+nfs_mount_dir_group: root
+nfs_mount_dir_mode: "0775"

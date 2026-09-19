@@ -1,0 +1,23 @@
+---
+- name: Remove old binaries
+  file:
+    path: "{{ radarr_bindir }}"
+    state: absent
+
+- name: Move new binaries into install directory
+  command: mv /tmp/Radarr "{{ radarr_installdir }}"
+  args:
+    creates: "{{ radarr_bindir }}"
+
+- name: Set ownership and permissions on install directory
+  file:
+    path: "{{ radarr_bindir }}"
+    owner: "{{ radarr_user }}"
+    group: "{{ radarr_group }}"
+    mode: '0775'
+    recurse: true
+
+- name: Start Radarr service
+  systemd:
+    name: radarr
+    state: started

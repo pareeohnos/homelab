@@ -1,0 +1,50 @@
+---
+- name: Read current Radarr version from local API
+  uri:
+    url: "http://localhost:{{ radarr_port }}/api/v3/system/status?apikey={{ radarr_api_key }}"
+    return_content: true
+  register: radarr_status_response
+  failed_when: false
+
+- name: Set installed version fact
+  set_fact:
+    radarr_installed_version: "{{ (radarr_status_response.json.version | default('0.0.0.0')) }}"
+
+- name: Determine system architecture
+  command: dpkg --print-architecture
+  register: dpkg_arch
+  changed_when: false
+
+- name: Map dpkg architecture to Radarr arch parameter
+  set_fact:
+    radarr_arch: >-
+      {{ 'x64' if dpkg_arch.stdout == 'amd64' else
+         'arm' if dpkg_arch.stdout == 'armhf' else
+         'arm64' if dpkg_arch.stdout == 'arm64' else
+         'unsupported' }}
+
+- name: Fail if architecture is unsupported
+  fail:
+    msg: "Architecture {{ dpkg_arch.stdout }} is not supported by Radarr"
+  when: radarr_arch == 'unsupported'
+
+- name: Check latest available version metadata
+  uri:
+    url: "https://radarr.servarr.com/v1/update/{{ radarr_branch }}/changes?os=linux&runtime=netcore&arch={{ radarr_arch }}"
+    return_content: true
+  register: radarr_latest_response
+
+- name: Set latest version fact
+  set_fact:
+    radarr_latest_version: "{{ radarr_latest_response.json[0].version }}"
+
+- name: Set update-available flag
+  set_fact:
+    radarr_update_available: "{{ radarr_installed_version != radarr_latest_version }}"
+
+- name: Report version status
+  debug:
+    msg: >-
+      Installed: {{ radarr_installed_version }},
+      Latest: {{ radarr_latest_version }},
+      Update needed: {{ radarr_update_available }}

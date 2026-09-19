@@ -1,0 +1,22 @@
+---
+- name: Read Radarr API key from config.xml
+  include_tasks: api_key.yml
+
+- name: Check installed vs latest version
+  include_tasks: check_version.yml
+
+- name: Back up current installation
+  include_tasks: backup.yml
+  when: radarr_update_available
+
+- name: Download latest Radarr release
+  include_tasks: download.yml
+  when: radarr_update_available
+
+- name: Deploy new version
+  include_tasks: deploy.yml
+  when: radarr_update_available
+
+- name: Verify Radarr is running post-update
+  include_tasks: verify.yml
+  when: radarr_update_available

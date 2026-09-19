@@ -1,0 +1,6 @@
+---
+- name: Download and extract new Radarr release
+  unarchive:
+    src: "https://radarr.servarr.com/v1/update/{{ radarr_branch }}/updatefile?os=linux&runtime=netcore&arch={{ radarr_arch }}"
+    dest: /tmp
+    remote_src: true

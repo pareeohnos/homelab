@@ -1,0 +1,51 @@
+---
+- name: Assert this role only supports Debian-family (apt) hosts
+  assert:
+    that:
+      - ansible_os_family == "Debian"
+    fail_msg: "nfs_mount role only supports Debian/Ubuntu hosts."
+
+- name: Install NFS client packages
+  ansible.builtin.apt:
+    name: nfs-common
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+- name: Check whether mount point directories already exist
+  ansible.builtin.stat:
+    path: "{{ item.path }}"
+  become: true
+  loop: "{{ nfs_mounts }}"
+  loop_control:
+    label: "{{ item.path }}"
+  register: nfs_mount_dir_stat
+
+# Only created when missing - once a share is mounted, its root directory
+# is remote (server-controlled), and chown/chmod against it can be rejected
+# by NFS root-squash even when running as root here.
+- name: Create mount point directories
+  ansible.builtin.file:
+    path: "{{ item.item.path }}"
+    state: directory
+    owner: "{{ item.item.owner | default(nfs_mount_dir_owner) }}"
+    group: "{{ item.item.group | default(nfs_mount_dir_group) }}"
+    mode: "{{ item.item.mode | default(nfs_mount_dir_mode) }}"
+  become: true
+  loop: "{{ nfs_mount_dir_stat.results }}"
+  loop_control:
+    label: "{{ item.item.path }}"
+  when: not item.stat.exists
+
+- name: Mount NFS shares and persist in fstab
+  ansible.posix.mount:
+    src: "{{ item.src }}"
+    path: "{{ item.path }}"
+    fstype: "{{ item.fstype | default(nfs_mount_default_fstype) }}"
+    opts: "{{ item.opts | default(nfs_mount_default_opts) }}"
+    state: mounted
+  become: true
+  loop: "{{ nfs_mounts }}"
+  loop_control:
+    label: "{{ item.path }}"

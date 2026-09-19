@@ -1,0 +1,44 @@
+---
+- name: Ensure backup directory exists
+  file:
+    path: "{{ radarr_backup_dir }}"
+    state: directory
+    mode: '0750'
+
+- name: Stop Radarr service before backup
+  systemd:
+    name: radarr
+    state: stopped
+
+- name: Set backup timestamp
+  set_fact:
+    radarr_backup_timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
+
+- name: Archive current binaries
+  archive:
+    path: "{{ radarr_bindir }}"
+    dest: "{{ radarr_backup_dir }}/radarr-bin-{{ radarr_installed_version }}-{{ radarr_backup_timestamp }}.tar.gz"
+    format: gz
+
+# Data (config.xml, radarr.db) is what actually matters to preserve —
+# binaries are disposable and re-downloadable, the database isn't.
+- name: Archive current data directory (config/database)
+  archive:
+    path: "{{ radarr_datadir }}"
+    dest: "{{ radarr_backup_dir }}/radarr-data-{{ radarr_installed_version }}-{{ radarr_backup_timestamp }}.tar.gz"
+    format: gz
+
+- name: Find old backups
+  find:
+    paths: "{{ radarr_backup_dir }}"
+    patterns: "radarr-*.tar.gz"
+    age: "0s"
+  register: radarr_backups
+
+- name: Prune old backups beyond retention count
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ (radarr_backups.files | sort(attribute='mtime', reverse=true))[(radarr_keep_backups * 2):] }}"
+  loop_control:
+    label: "{{ item.path }}"

@@ -1,0 +1,24 @@
+---
+- name: Check that Radarr config.xml exists
+  stat:
+    path: "{{ radarr_datadir }}/config.xml"
+  register: radarr_config_file
+
+- name: Fail if config.xml is missing (Radarr not yet installed/run)
+  fail:
+    msg: "Could not find {{ radarr_datadir }}/config.xml — has Radarr been installed and started at least once?"
+  when: not radarr_config_file.stat.exists
+
+- name: Read config.xml contents
+  slurp:
+    src: "{{ radarr_datadir }}/config.xml"
+  register: radarr_config_raw
+
+- name: Extract API key from config.xml
+  set_fact:
+    radarr_api_key: "{{ (radarr_config_raw.content | b64decode) | regex_search('<ApiKey>(.*?)</ApiKey>', '\\1') | first }}"
+
+- name: Fail if API key could not be extracted
+  fail:
+    msg: "Failed to extract API key from config.xml"
+  when: radarr_api_key | length == 0

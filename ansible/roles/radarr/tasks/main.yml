@@ -14,19 +14,19 @@
       - src: pm-nas-01.home.hooper.co.uk:/mnt/Media
         path: /mnt/Media
 
-- name: Download and extract Sonarr
+- name: Download and extract Radarr
   include_tasks: download.yml
 
-- name: Install Sonarr
+- name: Install Radarr
   include_tasks: install.yml
 
-- name: Configure and start Sonarr service
+- name: Configure and start Radarr service
   include_tasks: service.yml
 
 - name: Setup reverse proxy
   include_role:
     name: caddy
   vars:
-    caddy_url: lxc-sonarr-01.home.hooper.co.uk
+    caddy_url: lxc-radarr-01.home.hooper.co.uk
     caddy_ports:
-      - port: 8989
+      - port: 7878

@@ -1,0 +1,155 @@
+---
+# LXC containers (this role's normal play target) can't mount NFS
+# themselves - the kernel/AppArmor denies the mount() syscall from inside
+# the guest regardless of what the NFS server allows. So instead: mount the
+# share on the Proxmox host itself, then expose it into the container as a
+# bind-mounted "mp" entry via `pct set`. Every task below runs against
+# nfs_mount_lxc_host, not the container - only the final reboot-and-wait
+# touches the container directly (to pick up the new mount point).
+#
+# VMID is normally auto-detected via the container's own hostname rather
+# than hardcoded, so it doesn't go stale if the container is recreated with
+# a new VMID - see nfs_mount_resolved_vmid below.
+
+- name: List containers on the Proxmox host
+  ansible.builtin.command: pct list
+  become: true
+  delegate_to: "{{ nfs_mount_lxc_host }}"
+  register: nfs_mount_pct_list
+  changed_when: false
+  when: nfs_mount_lxc_vmid is not defined
+
+# Proxmox sets the container's actual hostname to match its `pct list`
+# Name column, so this is a reliable, config-free join key - avoids
+# hardcoding a VMID that would go stale if the container is ever recreated.
+# Set nfs_mount_lxc_vmid explicitly to skip this and override it.
+- name: Determine this container's VMID from its hostname
+  set_fact:
+    nfs_mount_resolved_vmid: >-
+      {{
+        (nfs_mount_pct_list.stdout_lines
+          | select('match', '.*\s' ~ (ansible_hostname | regex_escape) ~ '\s*$')
+          | map('trim')
+          | map('regex_replace', '^(\S+).*$', '\1')
+          | list)[0]
+      }}
+  when: nfs_mount_lxc_vmid is not defined
+
+- name: Use the explicitly provided VMID
+  set_fact:
+    nfs_mount_resolved_vmid: "{{ nfs_mount_lxc_vmid }}"
+  when: nfs_mount_lxc_vmid is defined
+
+- name: Install NFS client packages on the Proxmox host
+  ansible.builtin.apt:
+    name: nfs-common
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+  delegate_to: "{{ nfs_mount_lxc_host }}"
+
+- name: Check whether mount point directories already exist on the Proxmox host
+  ansible.builtin.stat:
+    path: "{{ item.path }}"
+  become: true
+  delegate_to: "{{ nfs_mount_lxc_host }}"
+  loop: "{{ nfs_mounts }}"
+  loop_control:
+    label: "{{ item.path }}"
+  register: nfs_mount_dir_stat
+
+# Only created when missing - once a share is mounted, its root directory
+# is remote (server-controlled), and chown/chmod against it can be rejected
+# by NFS root-squash even when running as root here.
+- name: Create mount point directories on the Proxmox host
+  ansible.builtin.file:
+    path: "{{ item.item.path }}"
+    state: directory
+    owner: "{{ item.item.owner | default(nfs_mount_dir_owner) }}"
+    group: "{{ item.item.group | default(nfs_mount_dir_group) }}"
+    mode: "{{ item.item.mode | default(nfs_mount_dir_mode) }}"
+  become: true
+  delegate_to: "{{ nfs_mount_lxc_host }}"
+  loop: "{{ nfs_mount_dir_stat.results }}"
+  loop_control:
+    label: "{{ item.item.path }}"
+  when: not item.stat.exists
+
+- name: Mount NFS shares on the Proxmox host and persist in fstab
+  ansible.posix.mount:
+    src: "{{ item.src }}"
+    path: "{{ item.path }}"
+    fstype: "{{ item.fstype | default(nfs_mount_default_fstype) }}"
+    opts: "{{ item.opts | default(nfs_mount_default_opts) }}"
+    state: mounted
+  become: true
+  delegate_to: "{{ nfs_mount_lxc_host }}"
+  loop: "{{ nfs_mounts }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Read current LXC container config
+  ansible.builtin.command: "pct config {{ nfs_mount_resolved_vmid }}"
+  become: true
+  delegate_to: "{{ nfs_mount_lxc_host }}"
+  register: nfs_mount_pct_config
+  changed_when: false
+
+# Proxmox's "protection" flag blocks config/disk changes (including adding
+# mount points) as a guard against accidental modification. Restored to
+# whatever it was before once the mount point is applied, further down.
+- name: Determine whether container protection mode is enabled
+  set_fact:
+    nfs_mount_protection_enabled: "{{ 'protection: 1' in nfs_mount_pct_config.stdout }}"
+
+- name: Temporarily disable protection mode to update mount points
+  ansible.builtin.command: "pct set {{ nfs_mount_resolved_vmid }} --protection 0"
+  become: true
+  delegate_to: "{{ nfs_mount_lxc_host }}"
+  when: nfs_mount_protection_enabled
+
+# `pct set` isn't idempotent on its own, so only run it when the
+# container's config doesn't already have this exact mount point. A plain
+# substring check is enough here - it still matches even if Proxmox has
+# appended extra attributes (e.g. ",backup=0") to the line we originally
+# set. Registered (rather than using notify/handlers) because handlers
+# defined inside a role pulled in via dynamic include_role aren't reliably
+# found by a flush_handlers issued from within that same role.
+- name: Bind each share into the LXC container as a mount point
+  ansible.builtin.command: >-
+    pct set {{ nfs_mount_resolved_vmid }}
+    -mp{{ item.lxc_mp_index | default(idx) }}
+    {{ item.path }},mp={{ item.container_path | default(item.path) }}
+  become: true
+  delegate_to: "{{ nfs_mount_lxc_host }}"
+  loop: "{{ nfs_mounts }}"
+  loop_control:
+    index_var: idx
+    label: "mp{{ item.lxc_mp_index | default(idx) }}: {{ item.path }}"
+  when: >-
+    ('mp' ~ (item.lxc_mp_index | default(idx)) ~ ': ' ~ item.path ~ ',mp=' ~ (item.container_path | default(item.path)))
+    not in nfs_mount_pct_config.stdout
+  register: nfs_mount_bind_result
+
+- name: Restore protection mode
+  ansible.builtin.command: "pct set {{ nfs_mount_resolved_vmid }} --protection 1"
+  become: true
+  delegate_to: "{{ nfs_mount_lxc_host }}"
+  when: nfs_mount_protection_enabled
+
+# New/changed mount points don't take effect on an already-running
+# container - it needs a restart.
+- name: Reboot the LXC container from the Proxmox host
+  ansible.builtin.command: "pct reboot {{ nfs_mount_resolved_vmid }}"
+  become: true
+  delegate_to: "{{ nfs_mount_lxc_host }}"
+  when: nfs_mount_bind_result.changed
+
+# Not delegated - this waits for the container itself (this role's actual
+# play host) to come back up and accept SSH again.
+- name: Wait for the container to come back up
+  ansible.builtin.wait_for_connection:
+    delay: 5
+    timeout: 120
+  when: nfs_mount_bind_result.changed

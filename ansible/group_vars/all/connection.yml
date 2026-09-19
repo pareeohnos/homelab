@@ -1,0 +1,8 @@
+---
+# Tailscale's MagicDNS intercepts DNS on the control node and never forwards
+# queries for *.home.hooper.co.uk to the homelab's own DNS server, so plain
+# hostname resolution fails when connecting over the Tailscale link. Route
+# SSH connections through scripts/dns_proxy_connect.sh instead, which
+# resolves against that DNS server explicitly (falls through untouched for
+# inventory entries that are already a bare IP, e.g. the lockdown group).
+ansible_ssh_common_args: '-o ProxyCommand="{{ playbook_dir }}/../scripts/dns_proxy_connect.sh %h %p"'
