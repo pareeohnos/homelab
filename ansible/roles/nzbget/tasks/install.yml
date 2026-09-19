@@ -1,0 +1,18 @@
+---
+- name: Run NZBGet installer
+  become: true
+  command: >-
+    sh /tmp/nzbget-{{ nzbget_latest_version }}-bin-linux.run
+    --destdir {{ nzbget_appdir }}
+    --silent
+  args:
+    creates: "{{ nzbget_appdir }}/nzbget"
+
+- name: Set ownership on install directory
+  become: true
+  file:
+    path: "{{ nzbget_appdir }}"
+    owner: "{{ nzbget_user }}"
+    group: "{{ nzbget_group }}"
+    mode: '0775'
+    recurse: true

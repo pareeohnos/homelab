@@ -2,7 +2,7 @@
 - name: Assert this role only supports Debian-family (apt) hosts
   assert:
     that:
-      - ansible_os_family == "Debian"
+      - ansible_facts['os_family'] == "Debian"
     fail_msg: "nfs_mount role only supports Debian/Ubuntu hosts."
 
 - name: Install NFS client packages

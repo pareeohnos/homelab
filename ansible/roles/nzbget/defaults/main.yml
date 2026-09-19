@@ -1,0 +1,27 @@
+---
+nzbget_user: media
+nzbget_group: media
+# Pinned rather than left to auto-assignment: sonarr, radarr, and nzbget
+# all share this NFS-mounted media directory, so their "media" user/group
+# needs to be numerically identical across containers - useradd/groupadd
+# picking "the next available system id" independently per container isn't
+# guaranteed to land on the same number twice.
+nzbget_uid: 2000
+nzbget_gid: 2000
+
+nzbget_installdir: /opt
+nzbget_appdir: "{{ nzbget_installdir }}/NZBGet"
+nzbget_conf: "{{ nzbget_appdir }}/nzbget.conf"
+nzbget_port: 6789
+
+# Downloads must live on the same NFS share sonarr/radarr use (not the
+# installer's own default of a folder under nzbget_appdir) - that's what
+# lets them hardlink completed downloads into the media library instead of
+# copying them across filesystems.
+nzbget_maindir: /mnt/Media/downloads
+
+nzbget_control_username: nzbget
+# No default - must be set via group_vars/all/vault.yml. NZBGet's actual
+# default (nzbget/tegbzn6789) is publicly documented, so leaving it in
+# place would mean anyone on the network can reach the WebUI/API blind.
+nzbget_control_password: ""

@@ -21,3 +21,11 @@
   become: true
   roles:
     - sonarr_update
+
+- name: Update nzbget
+  hosts: nzbget
+  gather_facts: yes
+  remote_user: ansible
+  become: true
+  roles:
+    - nzbget_update

@@ -1,0 +1,48 @@
+---
+# Not a full template - nzbget.conf ships as one large documented file with
+# hundreds of options; only the handful we actually need to change are
+# edited in place, so everything else keeps its shipped defaults/comments.
+- name: Set MainDir (downloads land on the shared NFS mount, not nzbget_appdir)
+  become: true
+  lineinfile:
+    path: "{{ nzbget_conf }}"
+    regexp: '^MainDir='
+    line: "MainDir={{ nzbget_maindir }}"
+  notify: restart nzbget
+
+- name: Set ControlUsername
+  become: true
+  lineinfile:
+    path: "{{ nzbget_conf }}"
+    regexp: '^ControlUsername='
+    line: "ControlUsername={{ nzbget_control_username }}"
+  no_log: true
+  notify: restart nzbget
+
+- name: Set ControlPassword
+  become: true
+  lineinfile:
+    path: "{{ nzbget_conf }}"
+    regexp: '^ControlPassword='
+    line: "ControlPassword={{ nzbget_control_password }}"
+  no_log: true
+  notify: restart nzbget
+
+# Runs as nzbget_user, not root - root's own unprivileged-container UID
+# shift doesn't match what the NFS share is chowned to (see nfs_mount's
+# shifted-id reporting), so root only gets "other" access here (no write,
+# since the share is 0775). Only the media user's own shifted identity
+# actually has write access.
+#
+# Uses `sudo -u` inside a root-owned command rather than Ansible's own
+# become_user, because become_user switching between two different
+# non-root users (the SSH login user and nzbget_user here) depends on ACL
+# support to share Ansible's temp files between them - its fallback chmod
+# syntax for that is BSD/Solaris-specific and fails on this Debian/Ubuntu
+# container. Running the whole thing as root and sudo-ing internally
+# sidesteps that entirely.
+- name: Create downloads directory on the shared media mount
+  become: true
+  command: "sudo -u {{ nzbget_user }} mkdir -m 0775 -p {{ nzbget_maindir }}"
+  args:
+    creates: "{{ nzbget_maindir }}"

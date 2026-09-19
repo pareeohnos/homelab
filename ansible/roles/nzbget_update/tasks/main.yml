@@ -1,0 +1,19 @@
+---
+- name: Check installed vs latest version
+  include_tasks: check_version.yml
+
+- name: Back up current installation
+  include_tasks: backup.yml
+  when: nzbget_update_available
+
+- name: Download latest NZBGet release
+  include_tasks: download.yml
+  when: nzbget_update_available
+
+- name: Deploy new version
+  include_tasks: deploy.yml
+  when: nzbget_update_available
+
+- name: Verify NZBGet is running post-update
+  include_tasks: verify.yml
+  when: nzbget_update_available

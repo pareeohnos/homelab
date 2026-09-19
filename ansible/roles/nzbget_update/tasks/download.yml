@@ -1,0 +1,6 @@
+---
+- name: Download new NZBGet installer
+  ansible.builtin.get_url:
+    url: "https://github.com/nzbget/nzbget/releases/download/{{ nzbget_latest_release.json.tag_name }}/nzbget-{{ nzbget_latest_version }}-bin-linux.run"
+    dest: "/tmp/nzbget-{{ nzbget_latest_version }}-bin-linux.run"
+    mode: "0755"

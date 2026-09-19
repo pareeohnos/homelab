@@ -8,7 +8,7 @@
   roles:
     - radarr
 
-# - name: Deploy NZBGet
-#   hosts: nzbget
-#   roles:
-#     - nzbget
+- name: Deploy NZBGet
+  hosts: nzbget
+  roles:
+    - nzbget

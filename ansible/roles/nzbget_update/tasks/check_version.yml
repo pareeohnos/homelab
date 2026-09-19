@@ -1,0 +1,30 @@
+---
+- name: Read currently installed NZBGet version
+  command: "{{ nzbget_appdir }}/nzbget -v"
+  register: nzbget_version_output
+  changed_when: false
+
+- name: Set installed version fact
+  set_fact:
+    nzbget_installed_version: "{{ nzbget_version_output.stdout | regex_search('[0-9]+(\\.[0-9]+)+') }}"
+
+- name: Look up latest NZBGet release
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/nzbget/nzbget/releases/latest
+    return_content: true
+  register: nzbget_latest_release
+
+- name: Set latest version fact
+  set_fact:
+    nzbget_latest_version: "{{ nzbget_latest_release.json.tag_name | regex_replace('^v', '') }}"
+
+- name: Set update-available flag
+  set_fact:
+    nzbget_update_available: "{{ nzbget_installed_version != nzbget_latest_version }}"
+
+- name: Report version status
+  debug:
+    msg: >-
+      Installed: {{ nzbget_installed_version }},
+      Latest: {{ nzbget_latest_version }},
+      Update needed: {{ nzbget_update_available }}

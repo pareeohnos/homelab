@@ -1,0 +1,49 @@
+---
+# Unlike Sonarr/Radarr, this doesn't stay in the foreground under Type=simple.
+# NZBGet's "-s" (console-mode) tries to attach to an interactive terminal
+# and crashes under systemd (no TTY) - "-D" is its actual headless daemon
+# flag, which self-forks, so the unit needs Type=forking to match.
+- name: Deploy systemd unit file for NZBGet
+  become: true
+  copy:
+    dest: /etc/systemd/system/nzbget.service
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=NZBGet Daemon
+      After=syslog.target network.target
+
+      [Service]
+      User={{ nzbget_user }}
+      Group={{ nzbget_group }}
+      Type=forking
+      ExecStart={{ nzbget_appdir }}/nzbget -c {{ nzbget_conf }} -D
+      ExecStop={{ nzbget_appdir }}/nzbget -c {{ nzbget_conf }} -Q
+      TimeoutStopSec=20
+      KillMode=process
+      Restart=on-failure
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: reload systemd
+
+- name: Enable and start NZBGet service
+  become: true
+  systemd:
+    name: nzbget
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Wait for NZBGet to become active
+  become: true
+  systemd:
+    name: nzbget
+  register: nzbget_status
+  until: nzbget_status.status.ActiveState == "active"
+  retries: 10
+  delay: 2
+
+- name: Show access URL
+  debug:
+    msg: "NZBGet is running — browse to http://{{ ansible_facts['default_ipv4']['address'] }}:{{ nzbget_port }}"

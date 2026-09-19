@@ -1,0 +1,40 @@
+---
+- name: Ensure backup directory exists
+  file:
+    path: "{{ nzbget_backup_dir }}"
+    state: directory
+    mode: '0750'
+
+- name: Stop NZBGet service before backup
+  systemd:
+    name: nzbget
+    state: stopped
+
+- name: Set backup timestamp
+  set_fact:
+    nzbget_backup_timestamp: "{{ ansible_facts['date_time']['iso8601_basic_short'] }}"
+
+# Unlike Sonarr/Radarr, NZBGet's config lives alongside its binary in one
+# directory (not a separate data dir) - the installer never overwrites an
+# existing nzbget.conf, but back it up anyway in case something else goes
+# wrong during the update.
+- name: Archive current install directory (binary/config/webui)
+  archive:
+    path: "{{ nzbget_appdir }}"
+    dest: "{{ nzbget_backup_dir }}/nzbget-{{ nzbget_installed_version }}-{{ nzbget_backup_timestamp }}.tar.gz"
+    format: gz
+
+- name: Find old backups
+  find:
+    paths: "{{ nzbget_backup_dir }}"
+    patterns: "nzbget-*.tar.gz"
+    age: "0s"
+  register: nzbget_backups
+
+- name: Prune old backups beyond retention count
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ (nzbget_backups.files | sort(attribute='mtime', reverse=true))[nzbget_keep_backups:] }}"
+  loop_control:
+    label: "{{ item.path }}"

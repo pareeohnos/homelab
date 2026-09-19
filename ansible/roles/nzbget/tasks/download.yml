@@ -1,0 +1,19 @@
+---
+# Unlike Sonarr/Radarr, NZBGet ships one universal Linux installer bundling
+# all CPU architectures - it self-detects at install time, so no
+# dpkg --print-architecture / arch-mapping step is needed here.
+- name: Look up latest NZBGet release
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/nzbget/nzbget/releases/latest
+    return_content: true
+  register: nzbget_latest_release
+
+- name: Set latest version fact
+  set_fact:
+    nzbget_latest_version: "{{ nzbget_latest_release.json.tag_name | regex_replace('^v', '') }}"
+
+- name: Download NZBGet installer
+  ansible.builtin.get_url:
+    url: "https://github.com/nzbget/nzbget/releases/download/{{ nzbget_latest_release.json.tag_name }}/nzbget-{{ nzbget_latest_version }}-bin-linux.run"
+    dest: "/tmp/nzbget-{{ nzbget_latest_version }}-bin-linux.run"
+    mode: "0755"

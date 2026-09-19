@@ -42,4 +42,4 @@
 
 - name: Show access URL
   debug:
-    msg: "Radarr is running — browse to http://{{ ansible_default_ipv4.address }}:{{ radarr_port }}"
+    msg: "Radarr is running — browse to http://{{ ansible_facts['default_ipv4']['address'] }}:{{ radarr_port }}"

@@ -1,0 +1,7 @@
+---
+nzbget_user: media
+nzbget_group: media
+nzbget_installdir: /opt
+nzbget_appdir: "{{ nzbget_installdir }}/NZBGet"
+nzbget_backup_dir: /var/backups/nzbget
+nzbget_keep_backups: 3

@@ -57,6 +57,24 @@
 #   lxc_mp_index   - which `pct` mp slot to use (defaults to the item's
 #                    position in the list) - override if a container
 #                    already has other mount points configured
+#
+# Unprivileged containers shift their internal UIDs/GIDs when presented to
+# the host (and from there to NFS) - e.g. internal uid 2000 might actually
+# be host uid 102000. A file the container owns as "media" (2000) then
+# shows up on the NFS share as owned by the SHIFTED value, which the
+# container itself sees as "nobody" once it reads it back through the bind
+# mount, since its own view expects the unshifted 2000 for that. Set
+# nfs_mount_lxc_shifted_id_report to a container-internal id (e.g. the
+# shared "media" uid/gid) and the role will read /etc/subuid live on
+# nfs_mount_lxc_host and report (via a debug message) what to chown the
+# NFS share to on the NAS side for it to resolve correctly.
+#
+# (An earlier version of this tried to punch a hole in the shift instead,
+# mapping that one id straight through unshifted so the NAS could just use
+# 2000 directly - but Proxmox enforces newuidmap/newgidmap's normal rule
+# that any mapped id must already be delegated in /etc/subuid, so a
+# non-delegated id gets flatly rejected at container start. Reporting the
+# shifted value instead needs no container config changes at all.)
 # ---------------------------------------------------------------------------
 
 nfs_mounts: []

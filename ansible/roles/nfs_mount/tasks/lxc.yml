@@ -28,7 +28,7 @@
     nfs_mount_resolved_vmid: >-
       {{
         (nfs_mount_pct_list.stdout_lines
-          | select('match', '.*\s' ~ (ansible_hostname | regex_escape) ~ '\s*$')
+          | select('match', '.*\s' ~ (ansible_facts['hostname'] | regex_escape) ~ '\s*$')
           | map('trim')
           | map('regex_replace', '^(\S+).*$', '\1')
           | list)[0]
@@ -39,6 +39,51 @@
   set_fact:
     nfs_mount_resolved_vmid: "{{ nfs_mount_lxc_vmid }}"
   when: nfs_mount_lxc_vmid is defined
+
+# Unprivileged containers shift their internal UIDs/GIDs when presented to
+# the host (and from there to NFS) - e.g. internal uid 2000 might actually
+# be host uid 102000. A file the container owns as "media" (2000) shows up
+# on the NFS share as owned by that shifted value, not 2000 - so the NAS
+# side needs to be chowned to the SHIFTED value for it to resolve back to
+# "media" once the container reads it through the bind mount.
+#
+# (Punching a hole in the shift to pass a specific id through unmodified
+# was tried instead, but Proxmox enforces newuidmap/newgidmap's normal
+# restriction that any mapped range must already be delegated in
+# /etc/subuid - a plain, non-delegated id like 2000 gets flatly rejected at
+# container start, so that route needs an extra one-time subuid/subgid
+# edit on the Proxmox host to even be possible. Reporting the shifted value
+# here instead needs no container config changes and carries no risk of
+# failing to start the container.)
+#
+# Read live from /etc/subuid rather than hardcoded, so this keeps reporting
+# correctly even if Proxmox's default allocation ever changes.
+- name: Read subuid/subgid allocation for root on the Proxmox host
+  ansible.builtin.command: "grep ^root: /etc/{{ item }}"
+  become: true
+  delegate_to: "{{ nfs_mount_lxc_host }}"
+  loop:
+    - subuid
+    - subgid
+  loop_control:
+    label: "{{ item }}"
+  register: nfs_mount_subid_lookup
+  changed_when: false
+  when: nfs_mount_lxc_shifted_id_report is defined
+
+- name: Compute this container's host-shifted id
+  set_fact:
+    nfs_mount_shifted_id: "{{ (nfs_mount_subid_lookup.results[0].stdout.split(':')[1] | int) + (nfs_mount_lxc_shifted_id_report | int) }}"
+  when: nfs_mount_lxc_shifted_id_report is defined
+
+- name: Report the host-shifted id
+  debug:
+    msg: >-
+      Container-internal id {{ nfs_mount_lxc_shifted_id_report }} is host
+      uid/gid {{ nfs_mount_shifted_id }} once shifted by this unprivileged
+      container - chown the NFS share to {{ nfs_mount_shifted_id }}:{{ nfs_mount_shifted_id }}
+      on the NAS for it to resolve correctly from inside the container.
+  when: nfs_mount_lxc_shifted_id_report is defined
 
 - name: Install NFS client packages on the Proxmox host
   ansible.builtin.apt:

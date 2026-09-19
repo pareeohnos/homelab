@@ -1,0 +1,22 @@
+---
+# Safe to run against the existing install dir - the installer only ever
+# creates nzbget.conf from its template when one doesn't already exist, so
+# re-running it in place updates the binary/webui without touching config.
+- name: Run NZBGet installer in place
+  command: >-
+    sh /tmp/nzbget-{{ nzbget_latest_version }}-bin-linux.run
+    --destdir {{ nzbget_appdir }}
+    --silent
+
+- name: Set ownership on install directory
+  file:
+    path: "{{ nzbget_appdir }}"
+    owner: "{{ nzbget_user }}"
+    group: "{{ nzbget_group }}"
+    mode: '0775'
+    recurse: true
+
+- name: Start NZBGet service
+  systemd:
+    name: nzbget
+    state: started

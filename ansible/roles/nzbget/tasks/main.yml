@@ -1,0 +1,41 @@
+---
+- name: Assert nzbget_control_password is set
+  assert:
+    that:
+      - nzbget_control_password | length > 0
+    fail_msg: >-
+      nzbget_control_password must be set (via group_vars/all/vault.yml) -
+      NZBGet's built-in default credentials are publicly documented.
+
+- name: Create user and group
+  include_tasks: user.yml
+
+- name: Mount NAS media share
+  include_role:
+    name: nfs_mount
+  vars:
+    nfs_mount_lxc_host: alps
+    nfs_mount_lxc_shifted_id_report: "{{ nzbget_uid }}"
+    nfs_mounts:
+      - src: pm-nas-01.home.hooper.co.uk:/mnt/Media
+        path: /mnt/Media
+
+- name: Download NZBGet installer
+  include_tasks: download.yml
+
+- name: Install NZBGet
+  include_tasks: install.yml
+
+- name: Configure NZBGet
+  include_tasks: configure.yml
+
+- name: Configure and start NZBGet service
+  include_tasks: service.yml
+
+- name: Setup reverse proxy
+  include_role:
+    name: caddy
+  vars:
+    caddy_url: lxc-nzbget-01.home.hooper.co.uk
+    caddy_ports:
+      - port: 6789

@@ -42,4 +42,4 @@
 
 - name: Show access URL
   debug:
-    msg: "Sonarr is running — browse to http://{{ ansible_default_ipv4.address }}:{{ sonarr_port }}"
+    msg: "Sonarr is running — browse to http://{{ ansible_facts['default_ipv4']['address'] }}:{{ sonarr_port }}"

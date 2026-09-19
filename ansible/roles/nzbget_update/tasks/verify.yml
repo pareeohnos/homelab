@@ -1,0 +1,20 @@
+---
+- name: Wait for NZBGet to become active
+  systemd:
+    name: nzbget
+  register: nzbget_post_update_status
+  until: nzbget_post_update_status.status.ActiveState == "active"
+  retries: 10
+  delay: 2
+
+- name: Confirm new version
+  command: "{{ nzbget_appdir }}/nzbget -v"
+  register: nzbget_verify_output
+  changed_when: false
+  until: (nzbget_verify_output.stdout | regex_search('[0-9]+(\\.[0-9]+)+')) == nzbget_latest_version
+  retries: 10
+  delay: 3
+
+- name: Report update result
+  debug:
+    msg: "NZBGet updated to version {{ nzbget_latest_version }}"

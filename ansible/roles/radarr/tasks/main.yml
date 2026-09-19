@@ -10,6 +10,7 @@
     name: nfs_mount
   vars:
     nfs_mount_lxc_host: alps
+    nfs_mount_lxc_shifted_id_report: "{{ radarr_uid }}"
     nfs_mounts:
       - src: pm-nas-01.home.hooper.co.uk:/mnt/Media
         path: /mnt/Media
