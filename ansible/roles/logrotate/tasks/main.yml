@@ -1,0 +1,29 @@
+---
+- name: Assert logrotate_name and logrotate_paths are set
+  assert:
+    that:
+      - logrotate_name | length > 0
+      - logrotate_paths | length > 0
+    fail_msg: "logrotate_name and logrotate_paths must be set by the including role."
+
+- name: Ensure logrotate is installed
+  become: true
+  apt:
+    name: logrotate
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+# logrotate refuses to act on a config file that isn't owned by root (a
+# real error, not just a warning) - become: true here means the whole
+# write-then-validate sequence runs already-elevated, so the file it
+# validates is root-owned throughout.
+- name: Deploy logrotate configuration
+  become: true
+  template:
+    src: logrotate.conf.j2
+    dest: "/etc/logrotate.d/{{ logrotate_name }}"
+    owner: root
+    group: root
+    mode: '0644'
+    validate: "logrotate -d %s"

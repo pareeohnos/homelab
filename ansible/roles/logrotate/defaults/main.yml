@@ -1,0 +1,41 @@
+---
+# ---------------------------------------------------------------------------
+# logrotate role defaults
+#
+# Meant to be pulled into OTHER roles (via include_role) to configure log
+# rotation for one or more log paths. At minimum, set logrotate_name and
+# logrotate_paths:
+#
+#   - name: Configure log rotation
+#     include_role:
+#       name: logrotate
+#     vars:
+#       logrotate_name: technitium
+#       logrotate_paths:
+#         - /etc/dns/logs/*.log
+#       logrotate_create_owner: technitium
+#       logrotate_create_group: technitium
+#
+# logrotate_name becomes the filename under /etc/logrotate.d/.
+# logrotate_paths is a list of paths/globs rotated together under one
+# stanza, using the shared options below. Call this role more than once
+# (with a different logrotate_name) if you need separate stanzas with
+# different settings.
+# ---------------------------------------------------------------------------
+
+logrotate_name: ""
+logrotate_paths: []
+
+logrotate_frequency: daily      # daily | weekly | monthly | yearly
+logrotate_rotate: 7             # how many rotated logs to keep
+logrotate_compress: true
+logrotate_dateext: true
+logrotate_missingok: true
+logrotate_notifempty: true
+
+# Ownership applied to the freshly-created log file after rotation. Leave
+# owner/group unset to omit them from the "create" directive - logrotate
+# then just keeps the original file's owner.
+logrotate_create_mode: "0644"
+logrotate_create_owner: ""
+logrotate_create_group: ""

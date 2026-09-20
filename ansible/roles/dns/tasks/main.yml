@@ -10,5 +10,12 @@
 - name: Firewall
   include_tasks: firewall.yml
 
-- name: Logrotate
-  include_tasks: logrotate.yml
+- name: Configure log rotation
+  include_role:
+    name: logrotate
+  vars:
+    logrotate_name: technitium
+    logrotate_paths:
+      - /etc/dns/logs/*.log
+    logrotate_create_owner: technitium
+    logrotate_create_group: technitium

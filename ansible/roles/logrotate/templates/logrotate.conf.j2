@@ -1,0 +1,22 @@
+# Managed by Ansible (logrotate role) - do not edit by hand.
+{{ logrotate_paths | join('\n') }} {
+    {{ logrotate_frequency }}
+    rotate {{ logrotate_rotate }}
+{% if logrotate_compress %}
+    compress
+{% endif %}
+{% if logrotate_dateext %}
+    dateext
+{% endif %}
+{% if logrotate_missingok %}
+    missingok
+{% endif %}
+{% if logrotate_notifempty %}
+    notifempty
+{% endif %}
+{% if logrotate_create_owner and logrotate_create_group %}
+    create {{ logrotate_create_mode }} {{ logrotate_create_owner }} {{ logrotate_create_group }}
+{% else %}
+    create {{ logrotate_create_mode }}
+{% endif %}
+}
