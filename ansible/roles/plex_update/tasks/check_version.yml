@@ -1,0 +1,29 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: true
+    cache_valid_time: 0
+
+- name: Check installed vs candidate plexmediaserver version
+  command: apt-cache policy plexmediaserver
+  register: plex_apt_policy
+  changed_when: false
+
+- name: Extract installed version
+  set_fact:
+    plex_installed_version: "{{ plex_apt_policy.stdout | regex_search('Installed:\\s*(\\S+)', '\\1') | default([]) | first | default('') }}"
+
+- name: Extract latest available (candidate) version
+  set_fact:
+    plex_latest_version: "{{ plex_apt_policy.stdout | regex_search('Candidate:\\s*(\\S+)', '\\1') | default([]) | first | default('') }}"
+
+- name: Set update-available flag
+  set_fact:
+    plex_update_available: "{{ plex_installed_version != plex_latest_version }}"
+
+- name: Report version status
+  debug:
+    msg: >-
+      Installed: {{ plex_installed_version }},
+      Latest: {{ plex_latest_version }},
+      Update needed: {{ plex_update_available }}

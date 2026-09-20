@@ -1,0 +1,23 @@
+---
+# The plexmediaserver package installs and enables its own systemd unit -
+# no need to author one ourselves like the other arr roles do.
+- name: Enable and start Plex service
+  become: true
+  systemd:
+    name: plexmediaserver
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Wait for Plex to become active
+  become: true
+  systemd:
+    name: plexmediaserver
+  register: plex_status
+  until: plex_status.status.ActiveState == "active"
+  retries: 10
+  delay: 2
+
+- name: Show access URL
+  debug:
+    msg: "Plex is running — browse to http://{{ ansible_facts['default_ipv4']['address'] }}:{{ plex_port }}/web"

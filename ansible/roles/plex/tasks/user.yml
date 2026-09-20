@@ -1,0 +1,29 @@
+---
+# Must happen before the user/group tasks below - usermod/groupmod can't
+# change an id while a process (the plex service, running as this user)
+# is still using it.
+- name: Stop Plex service if currently running
+  become: true
+  systemd:
+    name: plexmediaserver
+    state: stopped
+  failed_when: false
+  register: plex_stop_result
+  changed_when: plex_stop_result.status is defined
+
+- name: Create shared media group
+  become: true
+  group:
+    name: "{{ plex_group }}"
+    gid: "{{ plex_gid }}"
+    state: present
+
+- name: Create plex system user
+  become: true
+  user:
+    name: "{{ plex_user }}"
+    uid: "{{ plex_uid }}"
+    group: "{{ plex_group }}"
+    system: true
+    create_home: false
+    shell: /usr/sbin/nologin

@@ -1,0 +1,65 @@
+---
+- name: Ensure prerequisite packages are installed
+  become: true
+  apt:
+    name:
+      - curl
+      - gnupg2
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Ensure /etc/apt/keyrings exists
+  become: true
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Download the Plex signing key
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ plex_gpg_key_url }}"
+    dest: /tmp/plex_signing_key.asc
+    mode: '0644'
+
+- name: Dearmor the Plex signing key into the keyring
+  become: true
+  command: "gpg --yes --dearmor -o {{ plex_keyring_path }} /tmp/plex_signing_key.asc"
+  args:
+    creates: "{{ plex_keyring_path }}"
+
+- name: Add the Plex apt repository
+  become: true
+  copy:
+    dest: /etc/apt/sources.list.d/plex.list
+    content: "{{ plex_apt_repo_line }}\n"
+    mode: '0644'
+  register: plex_repo_file
+
+- name: Install plexmediaserver
+  become: true
+  apt:
+    name: plexmediaserver
+    state: present
+    update_cache: "{{ plex_repo_file.changed }}"
+
+# plexmediaserver's postinst always forces the "plex" user's PRIMARY group
+# back to its own auto-created "plex" group, regardless of what it was set
+# to before install - so rather than fight that, add the shared "media"
+# group as a supplementary membership instead. Confirmed live this is
+# enough for plex to read and write the share (its mode is group-writable).
+- name: Add plex user to the shared media group
+  become: true
+  user:
+    name: "{{ plex_user }}"
+    groups: "{{ plex_group }}"
+    append: true
+  register: plex_group_membership
+
+- name: Restart Plex to apply new group membership
+  become: true
+  systemd:
+    name: plexmediaserver
+    state: restarted
+  when: plex_group_membership.changed

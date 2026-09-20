@@ -1,0 +1,10 @@
+---
+- name: Upgrade plexmediaserver
+  apt:
+    name: plexmediaserver
+    state: latest
+
+- name: Start Plex service
+  systemd:
+    name: plexmediaserver
+    state: started

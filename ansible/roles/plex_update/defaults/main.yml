@@ -1,0 +1,6 @@
+---
+plex_backup_dir: /var/backups/plexmediaserver
+plex_keep_backups: 3
+# Metadata/thumbnails/database - the actual media library itself lives on
+# the NFS share, not here.
+plex_datadir: "/var/lib/plexmediaserver/Library/Application Support/Plex Media Server"

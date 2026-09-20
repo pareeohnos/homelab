@@ -29,3 +29,11 @@
   become: true
   roles:
     - nzbget_update
+
+- name: Update plex
+  hosts: plex
+  gather_facts: yes
+  remote_user: ansible
+  become: true
+  roles:
+    - plex_update

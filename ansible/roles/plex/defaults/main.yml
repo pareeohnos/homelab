@@ -1,0 +1,18 @@
+---
+plex_user: plex
+plex_group: media
+# Pinned rather than left to auto-assignment: sonarr, radarr, nzbget, and
+# plex all share this NFS-mounted media directory. Unlike those roles,
+# plexmediaserver's own postinst always resets the "plex" user's PRIMARY
+# group back to its own auto-created "plex" group on every install/update,
+# so we don't fight that - plex_gid pins the user's uid only, and the
+# shared "media" group gets added as a supplementary membership instead
+# (see tasks/install.yml). Confirmed live this is sufficient for read AND
+# write access to the share.
+plex_uid: 2000
+plex_gid: 2000
+
+plex_port: 32400
+plex_gpg_key_url: https://downloads.plex.tv/plex-keys/PlexSign.v2.key
+plex_keyring_path: /etc/apt/keyrings/plexmediaserver.v2.gpg
+plex_apt_repo_line: "deb [signed-by={{ plex_keyring_path }}] https://repo.plex.tv/deb/ public main"

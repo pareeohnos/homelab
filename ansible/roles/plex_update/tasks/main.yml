@@ -1,0 +1,15 @@
+---
+- name: Check installed vs latest version
+  include_tasks: check_version.yml
+
+- name: Back up current installation
+  include_tasks: backup.yml
+  when: plex_update_available
+
+- name: Deploy new version
+  include_tasks: deploy.yml
+  when: plex_update_available
+
+- name: Verify Plex is running post-update
+  include_tasks: verify.yml
+  when: plex_update_available

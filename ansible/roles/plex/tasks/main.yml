@@ -1,0 +1,17 @@
+---
+- name: Create user and group
+  include_tasks: user.yml
+
+- name: Install Plex
+  include_tasks: install.yml
+
+- name: Configure and start Plex service
+  include_tasks: service.yml
+
+- name: Setup reverse proxy
+  include_role:
+    name: caddy
+  vars:
+    caddy_url: lxc-plex-01.home.hooper.co.uk
+    caddy_ports:
+      - port: 32400

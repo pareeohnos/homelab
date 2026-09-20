@@ -1,0 +1,6 @@
+- import_playbook: mount_shares.yml
+
+- name: Deploy Plex
+  hosts: plex
+  roles:
+    - plex

@@ -10,6 +10,7 @@
 10.0.40.2 # Sonarr
 10.0.40.3 # Radarr
 10.0.40.4 # Nzbget
+10.0.40.5 # Plex
 
 [proxmox]
 alps ansible_host=10.0.10.253 ansible_user=ansible
@@ -35,6 +36,9 @@ sonarr ansible_host=lxc-sonarr-01.home.hooper.co.uk ansible_user=ansible
 radarr ansible_host=lxc-radarr-01.home.hooper.co.uk ansible_user=ansible
 nzbget ansible_host=lxc-nzbget-01.home.hooper.co.uk ansible_user=ansible
 
+[plex_hosts]
+plex ansible_host=lxc-plex-01.home.hooper.co.uk ansible_user=ansible
+
 # These servers are fine to have unattended upgrades configured. Not all servers should
 # have this as there are some servers we don't want to accidentally take down in the
 # event of a failed upgrade
@@ -44,3 +48,4 @@ lxc-unifi-controller-01.home.hooper.co.uk ansible_user=ansible
 sonarr ansible_host=lxc-sonarr-01.home.hooper.co.uk ansible_user=ansible
 radarr ansible_host=lxc-radarr-01.home.hooper.co.uk ansible_user=ansible
 nzbget ansible_host=lxc-nzbget-01.home.hooper.co.uk ansible_user=ansible
+plex ansible_host=lxc-plex-01.home.hooper.co.uk ansible_user=ansible

@@ -1,0 +1,36 @@
+---
+- name: Ensure backup directory exists
+  file:
+    path: "{{ plex_backup_dir }}"
+    state: directory
+    mode: '0750'
+
+- name: Stop Plex service before backup
+  systemd:
+    name: plexmediaserver
+    state: stopped
+
+- name: Set backup timestamp
+  set_fact:
+    plex_backup_timestamp: "{{ ansible_facts['date_time']['iso8601_basic_short'] }}"
+
+- name: Archive current Plex data directory (metadata/database)
+  archive:
+    path: "{{ plex_datadir }}"
+    dest: "{{ plex_backup_dir }}/plex-data-{{ plex_installed_version }}-{{ plex_backup_timestamp }}.tar.gz"
+    format: gz
+
+- name: Find old backups
+  find:
+    paths: "{{ plex_backup_dir }}"
+    patterns: "plex-data-*.tar.gz"
+    age: "0s"
+  register: plex_backups
+
+- name: Prune old backups beyond retention count
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ (plex_backups.files | sort(attribute='mtime', reverse=true))[plex_keep_backups:] }}"
+  loop_control:
+    label: "{{ item.path }}"

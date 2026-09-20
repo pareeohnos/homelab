@@ -1,0 +1,19 @@
+---
+- name: Wait for Plex to become active
+  systemd:
+    name: plexmediaserver
+  register: plex_post_update_status
+  until: plex_post_update_status.status.ActiveState == "active"
+  retries: 10
+  delay: 2
+
+- name: Confirm new version
+  command: apt-cache policy plexmediaserver
+  register: plex_verify_policy
+  changed_when: false
+
+- name: Report update result
+  debug:
+    msg: >-
+      Plex updated to version
+      {{ plex_verify_policy.stdout | regex_search('Installed:\\s*(\\S+)', '\\1') | default([]) | first | default('unknown') }}
