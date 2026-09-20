@@ -29,3 +29,19 @@
     caddy_url: lxc-nzbget-01.home.hooper.co.uk
     caddy_ports:
       - port: 6789
+
+# NZBGet's LogFile setting (nzbget.conf) defaults to ${MainDir}/nzbget.log,
+# and MainDir was pointed at the shared NFS mount in configure.yml (for
+# hardlinking to work) - so this log lives on the NAS alongside downloads,
+# not on local storage. logrotate handles that fine (NFS supports the
+# same rename/create operations it uses), but worth knowing if you ever
+# reconsider where the log itself should live.
+- name: Configure log rotation
+  include_role:
+    name: logrotate
+  vars:
+    logrotate_name: nzbget
+    logrotate_paths:
+      - "{{ nzbget_maindir }}/nzbget.log"
+    logrotate_create_owner: "{{ nzbget_user }}"
+    logrotate_create_group: "{{ nzbget_group }}"

@@ -1,5 +1,8 @@
 # Managed by Ansible (logrotate role) - do not edit by hand.
-{{ logrotate_paths | join('\n') }} {
+{% for path in logrotate_paths %}
+"{{ path }}"
+{% endfor %}
+{
     {{ logrotate_frequency }}
     rotate {{ logrotate_rotate }}
 {% if logrotate_compress %}
@@ -16,6 +19,12 @@
 {% endif %}
 {% if logrotate_create_owner and logrotate_create_group %}
     create {{ logrotate_create_mode }} {{ logrotate_create_owner }} {{ logrotate_create_group }}
+    # Without this, logrotate refuses to touch a log directory that's
+    # group-writable by anyone other than root (a safety check against
+    # symlink attacks) - which any shared-ownership app directory like
+    # this one is by design. Telling it which identity to trust and act as
+    # bypasses that check.
+    su {{ logrotate_create_owner }} {{ logrotate_create_group }}
 {% else %}
     create {{ logrotate_create_mode }}
 {% endif %}

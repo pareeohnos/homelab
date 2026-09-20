@@ -21,3 +21,13 @@
     caddy_url: lxc-sonarr-01.home.hooper.co.uk
     caddy_ports:
       - port: 8989
+
+- name: Configure log rotation
+  include_role:
+    name: logrotate
+  vars:
+    logrotate_name: sonarr
+    logrotate_paths:
+      - "{{ sonarr_datadir | regex_replace('/$', '') }}/logs/*.txt"
+    logrotate_create_owner: "{{ sonarr_user }}"
+    logrotate_create_group: "{{ sonarr_group }}"

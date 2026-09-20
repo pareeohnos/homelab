@@ -21,3 +21,13 @@
     caddy_url: lxc-radarr-01.home.hooper.co.uk
     caddy_ports:
       - port: 7878
+
+- name: Configure log rotation
+  include_role:
+    name: logrotate
+  vars:
+    logrotate_name: radarr
+    logrotate_paths:
+      - "{{ radarr_datadir | regex_replace('/$', '') }}/logs/*.txt"
+    logrotate_create_owner: "{{ radarr_user }}"
+    logrotate_create_group: "{{ radarr_group }}"

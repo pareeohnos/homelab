@@ -15,3 +15,17 @@
     caddy_url: lxc-plex-01.home.hooper.co.uk
     caddy_ports:
       - port: 32400
+
+# Owned by plex:plex (the package's own fixed user/group, confirmed via
+# `systemctl cat plexmediaserver`) - not plex_group, which here means the
+# shared "media" group added as a supplementary membership, unrelated to
+# what actually owns Plex's own log files.
+- name: Configure log rotation
+  include_role:
+    name: logrotate
+  vars:
+    logrotate_name: plexmediaserver
+    logrotate_paths:
+      - '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Logs/*.log'
+    logrotate_create_owner: "{{ plex_user }}"
+    logrotate_create_group: "{{ plex_user }}"
