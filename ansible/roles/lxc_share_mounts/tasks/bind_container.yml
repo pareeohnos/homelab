@@ -1,0 +1,72 @@
+---
+- name: Read this container's current config
+  become: true
+  ansible.builtin.command: "pct config {{ vmid }}"
+  register: lxc_bind_config
+  changed_when: false
+
+# A plain substring/regex check for the exact volume+path pair - matches
+# regardless of which mp index it's bound at, or whether Proxmox has
+# appended extra attributes (e.g. ",backup=0") to the line.
+- name: Determine whether this share is already bound
+  set_fact:
+    lxc_bind_already_bound: >-
+      {{
+        (lxc_bind_config.stdout
+          | regex_search('(?m)^mp[0-9]+: ' ~ (share.value.path | regex_escape) ~ ',mp=' ~ (share.value.path | regex_escape) ~ '(,|$)')
+        ) is not none
+      }}
+
+- name: Determine the next available mp index
+  set_fact:
+    lxc_bind_used_indices: "{{ lxc_bind_config.stdout | regex_findall('(?m)^mp([0-9]+):') | map('int') | list }}"
+  when: not lxc_bind_already_bound
+
+- name: Compute the next available mp index
+  set_fact:
+    lxc_bind_next_index: "{{ (lxc_bind_used_indices | max + 1) if lxc_bind_used_indices | length > 0 else 0 }}"
+  when: not lxc_bind_already_bound
+
+# Proxmox's "protection" flag blocks config/disk changes (including adding
+# mount points) as a guard against accidental modification. Restored to
+# whatever it was before once the mount point is applied.
+- name: Determine whether container protection mode is enabled
+  set_fact:
+    lxc_bind_protection_enabled: "{{ 'protection: 1' in lxc_bind_config.stdout }}"
+  when: not lxc_bind_already_bound
+
+- name: Temporarily disable protection mode
+  become: true
+  ansible.builtin.command: "pct set {{ vmid }} --protection 0"
+  when: not lxc_bind_already_bound and lxc_bind_protection_enabled
+
+- name: Bind the share into the container
+  become: true
+  ansible.builtin.command: "pct set {{ vmid }} -mp{{ lxc_bind_next_index }} {{ share.value.path }},mp={{ share.value.path }}"
+  when: not lxc_bind_already_bound
+
+- name: Restore protection mode
+  become: true
+  ansible.builtin.command: "pct set {{ vmid }} --protection 1"
+  when: not lxc_bind_already_bound and lxc_bind_protection_enabled
+
+# New mount points don't take effect on an already-running container - it
+# needs a restart.
+- name: Reboot the container to apply the new mount point
+  become: true
+  ansible.builtin.command: "pct reboot {{ vmid }}"
+  when: not lxc_bind_already_bound
+
+# `pct exec` runs a command inside the container via Proxmox's own attach
+# mechanism, not SSH - so this can wait for the container to come back up
+# entirely from the Proxmox host, with no need to know the container's own
+# ansible inventory name/connection details.
+- name: Wait for the container to come back up
+  become: true
+  ansible.builtin.command: "pct exec {{ vmid }} -- true"
+  register: lxc_bind_wait
+  until: lxc_bind_wait.rc == 0
+  retries: 20
+  delay: 3
+  changed_when: false
+  when: not lxc_bind_already_bound

@@ -1,0 +1,6 @@
+- name: Mount NFS shares and bind them into tagged LXC containers
+  hosts: proxmox
+  gather_facts: yes
+  remote_user: ansible
+  roles:
+    - lxc_share_mounts

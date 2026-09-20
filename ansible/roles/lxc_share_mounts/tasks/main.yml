@@ -1,0 +1,12 @@
+---
+- name: Determine which configured shares target this Proxmox host
+  set_fact:
+    lxc_share_mounts_local: "{{ nfs_share_mounts | dict2items | selectattr('value.proxmox_host', 'equalto', inventory_hostname) | list }}"
+
+- name: Mount each applicable share and bind it into its tagged containers
+  include_tasks: mount_share.yml
+  loop: "{{ lxc_share_mounts_local }}"
+  loop_control:
+    loop_var: share
+    label: "{{ share.key }}"
+  when: lxc_share_mounts_local | length > 0

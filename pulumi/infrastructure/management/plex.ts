@@ -37,5 +37,16 @@ export const plexContainer = new proxmox.ct.Container(
     },
     lxcUbuntuTemplate.id,
   ),
-  { provider },
+  {
+    provider,
+    ignoreChanges: [
+      // Use `pct resize` in proxmox instead to avoid recreating the container
+      "disk.size",
+      // Bind mount points are managed by ansible (playbooks/mount_shares.yml,
+      // roles/lxc_share_mounts) - Proxmox only allows the API user root@pam
+      // to create bind-type mount points, which this project's Pulumi
+      // service account intentionally isn't.
+      "mountPoints",
+    ],
+  },
 );

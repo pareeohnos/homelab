@@ -1,0 +1,47 @@
+---
+# ---------------------------------------------------------------------------
+# lxc_share_mounts role defaults
+#
+# Mounts NFS shares on a Proxmox host and bind-mounts each one into every
+# LXC container on that host tagged with the matching key. Meant to run
+# once, centrally, before any app-specific role that expects its container
+# to already have the share available - see playbooks/mount_shares.yml.
+#
+# Pulumi can't own this itself: Proxmox hardcodes bind-mount-type mount
+# points to be creatable only by the root@pam API user specifically (not
+# delegable via any role/permission), and this project's Pulumi service
+# account intentionally isn't root@pam. Ansible reaches the Proxmox host
+# over SSH as a real root-equivalent user instead, which isn't subject to
+# that same API-level restriction.
+#
+# nfs_share_mounts is a dict keyed by tag name:
+#   proxmox_host      (required) - inventory host to mount this on and
+#                      search for tagged containers on (e.g. "alps")
+#   src               (required) - "host:/export/path"
+#   path              (required) - mount point, used both on the Proxmox
+#                      host's own filesystem and inside each tagged
+#                      container (bind-mounted at the same path)
+#   fstype/opts       - default to nfs_share_mount_default_fstype/opts
+#   shifted_id_report - optional container-internal uid/gid (e.g. the
+#                        shared "media" uid) to report the host-shifted
+#                        equivalent of, for chowning the NFS share
+#                        correctly on the NAS side - see the "Unprivileged
+#                        containers shift..." comment in tasks/mount_share.yml
+#
+# Any container tagged e.g. "media" (Proxmox tags, set via Pulumi) gets
+# the "media" entry below bind-mounted into it automatically.
+# ---------------------------------------------------------------------------
+
+nfs_share_mounts:
+  media:
+    proxmox_host: alps
+    src: pm-nas-01.home.hooper.co.uk:/mnt/Media
+    path: /mnt/Media
+    shifted_id_report: 2000
+
+nfs_share_mount_default_fstype: nfs
+nfs_share_mount_default_opts: "rw,noatime,_netdev,vers=3"
+
+nfs_share_mount_dir_owner: root
+nfs_share_mount_dir_group: root
+nfs_share_mount_dir_mode: "0775"

@@ -26,55 +26,10 @@
 #   owner/group/mode - permissions for the mount point directory
 #                      (applied before mounting; defaults below)
 #
-# --- LXC mode ---
-# Unprivileged LXC containers can't mount NFS themselves (the mount()
-# syscall is denied regardless of what the NFS server allows). If this
-# role's play target is actually an LXC guest, set nfs_mount_lxc_host too -
-# the role then mounts the share on the Proxmox host instead and
-# bind-mounts it into the container via `pct set`, restarting the container
-# to apply it (new mount points don't take effect on an already-running
-# container):
-#
-#   - name: Mount NAS media share
-#     include_role:
-#       name: nfs_mount
-#     vars:
-#       nfs_mount_lxc_host: alps
-#       nfs_mounts:
-#         - src: nas.home.hooper.co.uk:/volume1/media
-#           path: /mnt/media
-#
-# The container's VMID is auto-detected on nfs_mount_lxc_host by matching
-# `pct list`'s Name column against this container's own hostname (Proxmox
-# sets these to the same value) - no need to hardcode it, so it can't go
-# stale if the container is ever recreated with a different VMID. Set
-# nfs_mount_lxc_vmid explicitly only if the container's hostname doesn't
-# match its Proxmox name.
-#
-# Each nfs_mounts entry additionally supports, in this mode:
-#   container_path - path inside the container, if it should differ from
-#                    the host-side path (defaults to the same path)
-#   lxc_mp_index   - which `pct` mp slot to use (defaults to the item's
-#                    position in the list) - override if a container
-#                    already has other mount points configured
-#
-# Unprivileged containers shift their internal UIDs/GIDs when presented to
-# the host (and from there to NFS) - e.g. internal uid 2000 might actually
-# be host uid 102000. A file the container owns as "media" (2000) then
-# shows up on the NFS share as owned by the SHIFTED value, which the
-# container itself sees as "nobody" once it reads it back through the bind
-# mount, since its own view expects the unshifted 2000 for that. Set
-# nfs_mount_lxc_shifted_id_report to a container-internal id (e.g. the
-# shared "media" uid/gid) and the role will read /etc/subuid live on
-# nfs_mount_lxc_host and report (via a debug message) what to chown the
-# NFS share to on the NAS side for it to resolve correctly.
-#
-# (An earlier version of this tried to punch a hole in the shift instead,
-# mapping that one id straight through unshifted so the NAS could just use
-# 2000 directly - but Proxmox enforces newuidmap/newgidmap's normal rule
-# that any mapped id must already be delegated in /etc/subuid, so a
-# non-delegated id gets flatly rejected at container start. Reporting the
-# shifted value instead needs no container config changes at all.)
+# For mounting a share onto an LXC container's host (Proxmox) and
+# bind-mounting it into tagged containers, see the lxc_share_mounts role
+# and playbooks/mount_shares.yml instead - this role only mounts directly
+# on its own play target.
 # ---------------------------------------------------------------------------
 
 nfs_mounts: []

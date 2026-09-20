@@ -7,8 +7,3 @@
 
 - name: Mount shares directly on this host
   include_tasks: direct.yml
-  when: nfs_mount_lxc_host is not defined
-
-- name: Mount shares on the Proxmox host and bind into this LXC container
-  include_tasks: lxc.yml
-  when: nfs_mount_lxc_host is defined

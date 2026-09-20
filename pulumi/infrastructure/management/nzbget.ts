@@ -3,7 +3,7 @@ import * as proxmox from "@muhlba91/pulumi-proxmoxve";
 import provider from "./provider";
 import { Hosts, ProxmoxNodeNames, HostsConfiguration } from "../types";
 import { lxcUbuntuTemplate } from "./lxc_template";
-import { buildLxcConfiguration, mediaMountPoint } from "../lxc_config";
+import { buildLxcConfiguration } from "../lxc_config";
 
 const config = new pulumi.Config();
 
@@ -16,9 +16,15 @@ export const nzbgetContainer = new proxmox.ct.Container(
     Hosts.NZB_GET,
     {
       description: "NZBGet",
-      mountPoints: [mediaMountPoint],
     },
     lxcUbuntuTemplate.id,
   ),
-  { provider },
+  {
+    provider,
+    // Bind mount points are managed by ansible (playbooks/mount_shares.yml,
+    // roles/lxc_share_mounts) - Proxmox only allows the API user root@pam
+    // to create bind-type mount points, which this project's Pulumi
+    // service account intentionally isn't.
+    ignoreChanges: ["mountPoints"],
+  },
 );

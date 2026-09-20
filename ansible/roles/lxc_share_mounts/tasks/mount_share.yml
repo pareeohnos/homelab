@@ -1,0 +1,112 @@
+---
+- name: Install NFS client packages
+  become: true
+  ansible.builtin.apt:
+    name: nfs-common
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Check whether the mount point directory already exists
+  become: true
+  ansible.builtin.stat:
+    path: "{{ share.value.path }}"
+  register: lxc_share_dir_stat
+
+# Only created when missing - once a share is mounted, its root directory
+# is remote (server-controlled), and chown/chmod against it can be
+# rejected by NFS root-squash even when running as root here.
+- name: Create the mount point directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ share.value.path }}"
+    state: directory
+    owner: "{{ nfs_share_mount_dir_owner }}"
+    group: "{{ nfs_share_mount_dir_group }}"
+    mode: "{{ nfs_share_mount_dir_mode }}"
+  when: not lxc_share_dir_stat.stat.exists
+
+- name: Mount the NFS share and persist in fstab
+  become: true
+  ansible.posix.mount:
+    src: "{{ share.value.src }}"
+    path: "{{ share.value.path }}"
+    fstype: "{{ share.value.fstype | default(nfs_share_mount_default_fstype) }}"
+    opts: "{{ share.value.opts | default(nfs_share_mount_default_opts) }}"
+    state: mounted
+
+# Unprivileged containers shift their internal UIDs/GIDs when presented to
+# the host (and from there to NFS) - e.g. internal uid 2000 might actually
+# be host uid 102000. A file a container owns internally as uid 2000 shows
+# up on the NFS share as owned by that shifted value, not 2000 - so the
+# NAS side needs to be chowned to the shifted value for it to resolve back
+# correctly once a container reads it through its bind mount. Read live
+# from /etc/subuid rather than hardcoded, so this keeps reporting
+# correctly even if Proxmox's default allocation ever changes.
+- name: Read subuid/subgid allocation for root
+  become: true
+  ansible.builtin.command: "grep ^root: /etc/{{ item }}"
+  loop:
+    - subuid
+    - subgid
+  loop_control:
+    label: "{{ item }}"
+  register: lxc_share_subid_lookup
+  changed_when: false
+  when: share.value.shifted_id_report is defined
+
+- name: Compute the host-shifted id
+  set_fact:
+    lxc_share_shifted_id: "{{ (lxc_share_subid_lookup.results[0].stdout.split(':')[1] | int) + (share.value.shifted_id_report | int) }}"
+  when: share.value.shifted_id_report is defined
+
+- name: Report the host-shifted id
+  debug:
+    msg: >-
+      Container-internal id {{ share.value.shifted_id_report }} is host
+      uid/gid {{ lxc_share_shifted_id }} once shifted by an unprivileged
+      container - chown the NFS share to {{ lxc_share_shifted_id }}:{{ lxc_share_shifted_id }}
+      on the NAS for it to resolve correctly from inside containers tagged
+      "{{ share.key }}".
+  when: share.value.shifted_id_report is defined
+
+- name: List containers on this Proxmox host
+  become: true
+  ansible.builtin.command: pct list
+  register: lxc_share_pct_list
+  changed_when: false
+
+- name: Extract container VMIDs
+  set_fact:
+    lxc_share_all_vmids: "{{ lxc_share_pct_list.stdout_lines[1:] | select('match', '^\\S') | map('regex_replace', '^(\\S+).*$', '\\1') | list }}"
+
+- name: Read each container's config
+  become: true
+  ansible.builtin.command: "pct config {{ item }}"
+  loop: "{{ lxc_share_all_vmids }}"
+  loop_control:
+    label: "{{ item }}"
+  register: lxc_share_pct_configs
+  changed_when: false
+
+- name: Reset matched vmid list for this share
+  set_fact:
+    lxc_share_matched_vmids: []
+
+- name: Determine which containers are tagged for this share
+  set_fact:
+    lxc_share_matched_vmids: "{{ lxc_share_matched_vmids + [item.item] }}"
+  loop: "{{ lxc_share_pct_configs.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  vars:
+    lxc_share_tags_line: "{{ item.stdout | regex_search('(?m)^tags:.*$') | default('') }}"
+    lxc_share_container_tags: "{{ (lxc_share_tags_line | regex_replace('^tags:\\s*', '')).split(';') if lxc_share_tags_line else [] }}"
+  when: share.key in lxc_share_container_tags
+
+- name: Bind this share into each tagged container
+  include_tasks: bind_container.yml
+  loop: "{{ lxc_share_matched_vmids }}"
+  loop_control:
+    loop_var: vmid
+    label: "{{ vmid }}"
