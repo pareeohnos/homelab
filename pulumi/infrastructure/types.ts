@@ -16,6 +16,7 @@ export enum Hosts {
   SONARR = "sonarr",
   RADARR = "radarr",
   NZB_GET = "nzbget",
+  PLEX = "plex",
 }
 
 export interface GeneralConfiguration {

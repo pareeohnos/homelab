@@ -60,6 +60,13 @@ config:
         tags:
           - container
           - media
+      plex:
+        hostname: lxc-plex-01
+        ipAddress: 10.0.40.5
+        vlanId: 40
+        tags:
+          - container
+          - media
   proxmox:
     value:
       nodes:

@@ -9,6 +9,16 @@ import {
 } from "./types";
 import { getSshKey } from "./utils";
 
+// The NAS-backed media share, bind-mounted into any container that needs
+// read/write access to it (sonarr, radarr, nzbget). The actual NFS mount
+// on the Proxmox host's own filesystem still has to be set up separately
+// (via the ansible nfs_mount role) - Pulumi only owns the declaration of
+// this host path as a container mount point, not mounting NFS itself.
+export const mediaMountPoint = {
+  volume: "/mnt/Media",
+  path: "/mnt/Media",
+};
+
 export const buildLxcConfiguration = (
   proxmoxNode: ProxmoxNodeNames,
   hostname: Hosts,

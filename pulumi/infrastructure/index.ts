@@ -12,6 +12,7 @@ import { unifiControllerContainer } from "./network/unifi_controller";
 import { homeAssistantVm } from "./management/home_assistant";
 import { nzbgetContainer } from "./management/nzbget";
 import { sonarrContainer, radarrContainer } from "./management/the_arrs";
+import { plexContainer } from "./management/plex";
 
 /**
  * Network host
@@ -35,4 +36,5 @@ export const himalayasUnifiController = unifiControllerContainer;
 export const managementHomeAssistantVm = homeAssistantVm;
 export const managementSonarrContainer = sonarrContainer;
 export const managementRadarrContainer = radarrContainer;
-export const managementNzggetContainer = nzbgetContainer;
+export const managementNzbGetContainer = nzbgetContainer;
+export const managementPlexContainer = plexContainer;

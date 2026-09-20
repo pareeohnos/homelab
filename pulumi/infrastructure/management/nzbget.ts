@@ -3,7 +3,7 @@ import * as proxmox from "@muhlba91/pulumi-proxmoxve";
 import provider from "./provider";
 import { Hosts, ProxmoxNodeNames, HostsConfiguration } from "../types";
 import { lxcUbuntuTemplate } from "./lxc_template";
-import { buildLxcConfiguration } from "../lxc_config";
+import { buildLxcConfiguration, mediaMountPoint } from "../lxc_config";
 
 const config = new pulumi.Config();
 
@@ -16,6 +16,7 @@ export const nzbgetContainer = new proxmox.ct.Container(
     Hosts.NZB_GET,
     {
       description: "NZBGet",
+      mountPoints: [mediaMountPoint],
     },
     lxcUbuntuTemplate.id,
   ),

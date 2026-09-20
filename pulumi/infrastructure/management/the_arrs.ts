@@ -10,7 +10,7 @@ import * as proxmox from "@muhlba91/pulumi-proxmoxve";
 import provider from "./provider";
 import { Hosts, ProxmoxNodeNames, HostsConfiguration } from "../types";
 import { lxcUbuntuTemplate } from "./lxc_template";
-import { buildLxcConfiguration } from "../lxc_config";
+import { buildLxcConfiguration, mediaMountPoint } from "../lxc_config";
 
 const config = new pulumi.Config();
 
@@ -23,6 +23,7 @@ export const sonarrContainer = new proxmox.ct.Container(
     Hosts.SONARR,
     {
       description: "Sonarr",
+      mountPoints: [mediaMountPoint],
     },
     lxcUbuntuTemplate.id,
   ),
@@ -36,6 +37,7 @@ export const radarrContainer = new proxmox.ct.Container(
     Hosts.RADARR,
     {
       description: "Radarr",
+      mountPoints: [mediaMountPoint],
     },
     lxcUbuntuTemplate.id,
   ),
