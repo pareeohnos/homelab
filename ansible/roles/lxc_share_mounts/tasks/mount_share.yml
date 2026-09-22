@@ -70,6 +70,29 @@
       "{{ share.key }}".
   when: share.value.shifted_id_report is defined
 
+# For shares wanting a fully-unshifted identity (nfs_share_mounts.*.unshifted_id)
+# rather than the shift-aware reporting above, newuidmap/newgidmap enforce
+# that any mapped id must already be delegated to root via /etc/subuid and
+# /etc/subgid - this ensures that delegation exists, once per Proxmox
+# host, before any tagged container tries to use it.
+- name: Ensure the unshifted identity is delegated to root in subuid
+  become: true
+  lineinfile:
+    path: /etc/subuid
+    regexp: "^root:{{ share.value.unshifted_id }}:1$"
+    line: "root:{{ share.value.unshifted_id }}:1"
+    state: present
+  when: share.value.unshifted_id is defined
+
+- name: Ensure the unshifted identity is delegated to root in subgid
+  become: true
+  lineinfile:
+    path: /etc/subgid
+    regexp: "^root:{{ share.value.unshifted_id }}:1$"
+    line: "root:{{ share.value.unshifted_id }}:1"
+    state: present
+  when: share.value.unshifted_id is defined
+
 - name: List containers on this Proxmox host
   become: true
   ansible.builtin.command: pct list

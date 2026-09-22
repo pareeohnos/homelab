@@ -22,11 +22,27 @@
 #                      host's own filesystem and inside each tagged
 #                      container (bind-mounted at the same path)
 #   fstype/opts       - default to nfs_share_mount_default_fstype/opts
-#   shifted_id_report - optional container-internal uid/gid (e.g. the
-#                        shared "media" uid) to report the host-shifted
-#                        equivalent of, for chowning the NFS share
-#                        correctly on the NAS side - see the "Unprivileged
-#                        containers shift..." comment in tasks/mount_share.yml
+#
+# Use ONE of these two (mutually exclusive) to keep NFS-side permissions
+# correct despite unprivileged containers shifting their internal
+# UIDs/GIDs when presented to the host/NFS:
+#   shifted_id_report - a container-internal uid/gid to report the
+#                        host-shifted equivalent of (via a debug message),
+#                        for chowning the NFS share to that shifted value
+#                        on the NAS side. Simple, no container config
+#                        changes, but every client needs to know which of
+#                        two numbers applies to it depending on whether
+#                        it's a shifted LXC container or an unshifted VM.
+#   unshifted_id      - a container-internal uid/gid to map straight
+#                        through unshifted instead, so it matches
+#                        whatever a VM (which has no shift at all) would
+#                        use directly - no arithmetic needed anywhere, the
+#                        NAS just uses this same plain number. Requires
+#                        delegating the id to root in /etc/subuid/subgid
+#                        and editing each tagged container's config
+#                        (handled automatically), which needs a reboot to
+#                        take effect. Only one unshifted_id per container
+#                        is currently supported.
 #
 # Any container tagged e.g. "media" (Proxmox tags, set via Pulumi) gets
 # the "media" entry below bind-mounted into it automatically.
@@ -38,6 +54,11 @@ nfs_share_mounts:
     src: pm-nas-01.home.hooper.co.uk:/mnt/Media
     path: /mnt/Media
     shifted_id_report: 2000
+  photos:
+    proxmox_host: alps
+    src: pm-nas-01.home.hooper.co.uk:/mnt/Shinobi/Backup/Photos
+    path: /mnt/Shinobi/Backup/Photos
+    unshifted_id: 3000
 
 nfs_share_mount_default_fstype: nfs
 nfs_share_mount_default_opts: "rw,noatime,_netdev,vers=3"

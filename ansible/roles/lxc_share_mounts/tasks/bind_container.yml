@@ -50,12 +50,91 @@
   ansible.builtin.command: "pct set {{ vmid }} --protection 1"
   when: not lxc_bind_already_bound and lxc_bind_protection_enabled
 
-# New mount points don't take effect on an already-running container - it
-# needs a restart.
-- name: Reboot the container to apply the new mount point
+# --- Unshifted identity (see nfs_share_mounts.*.unshifted_id) ---
+#
+# Punches a hole in this container's unprivileged UID/GID shift so
+# unshifted_id passes through to the host (and from there to NFS)
+# unmodified, instead of landing on host_id = container_id + the default
+# subuid/subgid offset. mount_share.yml already ensured the id is
+# delegated to root in /etc/subuid/subgid - newuidmap/newgidmap refuse any
+# mapped id that isn't (confirmed the hard way: an undelegated id fails
+# the container at startup, not just at mount time).
+#
+# Only one unshifted id per container is supported for now - punching a
+# second hole means recomputing the whole idmap around both, which this
+# doesn't attempt. Fails loudly instead of silently overwriting a
+# different share's mapping.
+- name: Determine whether this share wants an unshifted identity
+  set_fact:
+    lxc_bind_wants_unshifted: "{{ share.value.unshifted_id is defined }}"
+
+- name: Determine whether this container already has that id unshifted
+  set_fact:
+    lxc_bind_id_already_unshifted: >-
+      {{
+        lxc_bind_wants_unshifted and
+        ('lxc.idmap: u ' ~ share.value.unshifted_id ~ ' ' ~ share.value.unshifted_id ~ ' 1') in lxc_bind_config.stdout
+      }}
+  when: lxc_bind_wants_unshifted
+
+- name: Fail if this container already has a different id unshifted
+  assert:
+    that:
+      - lxc_bind_id_already_unshifted or 'lxc.idmap:' not in lxc_bind_config.stdout
+    fail_msg: >-
+      Container {{ vmid }} already has a different unshifted identity
+      mapped (not {{ share.value.unshifted_id }}) - multiple
+      unshifted-identity shares on the same container aren't supported
+      yet.
+  when: lxc_bind_wants_unshifted and not lxc_bind_id_already_unshifted
+
+- name: Read subuid/subgid allocation for root on the Proxmox host
+  become: true
+  ansible.builtin.command: "grep ^root: /etc/{{ item }}"
+  loop:
+    - subuid
+    - subgid
+  loop_control:
+    label: "{{ item }}"
+  register: lxc_bind_subid_lookup
+  changed_when: false
+  when: lxc_bind_wants_unshifted and not lxc_bind_id_already_unshifted
+
+- name: Compute unshifted-identity idmap lines
+  set_fact:
+    lxc_bind_idmap_lines: >-
+      {{
+        lxc_bind_idmap_lines | default([]) + [
+          'lxc.idmap: ' ~ letter ~ ' 0 ' ~ offset ~ ' ' ~ id,
+          'lxc.idmap: ' ~ letter ~ ' ' ~ id ~ ' ' ~ id ~ ' 1',
+          'lxc.idmap: ' ~ letter ~ ' ' ~ (id | int + 1) ~ ' ' ~ (offset | int + id | int + 1) ~ ' ' ~ (id_range | int - id | int - 1)
+        ]
+      }}
+  vars:
+    letter: "{{ 'u' if item.item == 'subuid' else 'g' }}"
+    id: "{{ share.value.unshifted_id }}"
+    offset: "{{ item.stdout.split(':')[1] }}"
+    id_range: "{{ item.stdout.split(':')[2] }}"
+  loop: "{{ lxc_bind_subid_lookup.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: lxc_bind_wants_unshifted and not lxc_bind_id_already_unshifted
+
+- name: Apply the unshifted-identity idmap lines to the container config
+  become: true
+  ansible.builtin.blockinfile:
+    path: "/etc/pve/lxc/{{ vmid }}.conf"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - lxc_share_mounts identity map"
+    block: "{{ lxc_bind_idmap_lines | join('\n') }}"
+  register: lxc_bind_idmap_result
+  when: lxc_bind_wants_unshifted and not lxc_bind_id_already_unshifted
+
+# New mount points and unshifted-identity mappings don't take effect on an
+# already-running container - it needs a restart.
+- name: Reboot the container to apply changes
   become: true
   ansible.builtin.command: "pct reboot {{ vmid }}"
-  when: not lxc_bind_already_bound
+  when: not lxc_bind_already_bound or (lxc_bind_idmap_result is defined and lxc_bind_idmap_result is changed)
 
 # `pct exec` runs a command inside the container via Proxmox's own attach
 # mechanism, not SSH - so this can wait for the container to come back up
@@ -69,4 +148,4 @@
   retries: 20
   delay: 3
   changed_when: false
-  when: not lxc_bind_already_bound
+  when: not lxc_bind_already_bound or (lxc_bind_idmap_result is defined and lxc_bind_idmap_result is changed)
