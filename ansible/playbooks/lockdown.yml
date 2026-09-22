@@ -2,5 +2,6 @@
   hosts: lockdown
   gather_facts: yes
   remote_user: root
+  become: true
   roles:
     - lockdown

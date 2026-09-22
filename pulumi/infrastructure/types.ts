@@ -17,6 +17,7 @@ export enum Hosts {
   RADARR = "radarr",
   NZB_GET = "nzbget",
   PLEX = "plex",
+  IMMICH = "immich",
 }
 
 export interface GeneralConfiguration {

@@ -63,5 +63,14 @@ export const routerVm = new proxmox.vm.VirtualMachine(
     started: true,
     tags: (hostsConfig.router.tags ?? []).sort(),
   },
-  { provider },
+  {
+    provider,
+    // The provider always reads back a populated disks[].speed block
+    // (iopsRead/Write etc, all zero/"unlimited") even though it's never
+    // set here, so it shows as a perpetual diff on every preview/up.
+    // Can't target "disks[0].speed" directly - the engine rejects
+    // ignoreChanges on a path that's entirely added/removed, so the
+    // whole disks array is ignored instead.
+    ignoreChanges: ["disks"],
+  },
 );

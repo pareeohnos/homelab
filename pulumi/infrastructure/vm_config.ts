@@ -34,6 +34,15 @@ export const buildVmConfiguration = (
       agent: {
         enabled: true,
       },
+      // Without this, the provider defaults to a physical CD-ROM
+      // passthrough device rather than a genuinely empty virtual drive -
+      // QEMU then fails to start entirely, since the Proxmox host has no
+      // physical optical drive to pass through. Matches the explicit
+      // "fileId: none" already used in home_assistant.ts/router.ts.
+      cdrom: {
+        fileId: "none",
+        interface: "ide0",
+      },
       clone: {
         vmId: templateVmId,
         full: true,
@@ -71,6 +80,12 @@ export const buildVmConfiguration = (
       ],
       nodeName: nodeConfig.name,
       onBoot: true,
+      // Not inherited from the template on clone - has to be set again
+      // here, or the clone ends up with the provider's own "other"
+      // default instead.
+      operatingSystem: {
+        type: "l26",
+      },
       protection: true,
       tags: (hostConfig.tags ?? []).sort(),
     },

@@ -45,6 +45,15 @@ export const ubuntuVmTemplate = new proxmox.vm.VirtualMachine(
     agent: {
       enabled: true,
     },
+    // Without this, the provider defaults to a physical CD-ROM
+    // passthrough device rather than a genuinely empty virtual drive.
+    // Harmless on the template itself (it's never started), but clones
+    // inherit this device as-is alongside whatever buildVmConfiguration
+    // sets separately - so it has to be fixed here too, not just there.
+    cdrom: {
+      fileId: "none",
+      interface: "ide0",
+    },
     cpu: {
       cores: 1,
     },
@@ -71,5 +80,14 @@ export const ubuntuVmTemplate = new proxmox.vm.VirtualMachine(
       type: "l26",
     },
   },
-  { provider },
+  {
+    provider,
+    // The provider always reads back a populated disks[].speed block
+    // (iopsRead/Write etc, all zero/"unlimited") even though it's never
+    // set here, so it shows as a perpetual diff on every preview/up.
+    // Can't target "disks[0].speed" directly - the engine rejects
+    // ignoreChanges on a path that's entirely added/removed, so the
+    // whole disks array is ignored instead.
+    ignoreChanges: ["disks"],
+  },
 );

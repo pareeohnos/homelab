@@ -67,6 +67,14 @@ config:
         tags:
           - container
           - media
+
+      immich:
+        hostname: vm-immich-01
+        ipAddress: 10.0.40.6
+        vlanId: 40
+        tags:
+          - vm
+          - photos
   proxmox:
     value:
       nodes:

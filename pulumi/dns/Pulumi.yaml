@@ -75,6 +75,11 @@ config:
               hostname: "lxc-plex-01"
               comments: "Plex"
 
+            - type: "A"
+              ipAddress: "10.0.40.6"
+              hostname: "vm-immich-01"
+              comments: "Immich"
+
             #
             # IOT ADDRESSES
             #
