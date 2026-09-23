@@ -1,0 +1,61 @@
+---
+- name: Ensure prerequisite packages are installed
+  become: true
+  apt:
+    name:
+      - ca-certificates
+      - curl
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Ensure /etc/apt/keyrings exists
+  become: true
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Download the Docker signing key
+  become: true
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+
+- name: Add the Docker apt repository
+  become: true
+  copy:
+    dest: /etc/apt/sources.list.d/docker.list
+    content: >-
+      deb [arch={{ 'amd64' if ansible_facts['architecture'] == 'x86_64' else ansible_facts['architecture'] }}
+      signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu
+      {{ ansible_facts['distribution_release'] }} stable
+    mode: '0644'
+  register: immich_docker_repo_file
+
+- name: Install Docker Engine and the Compose plugin
+  become: true
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: "{{ immich_docker_repo_file.changed }}"
+
+- name: Enable and start Docker
+  become: true
+  systemd:
+    name: docker
+    enabled: true
+    state: started
+
+- name: Add immich user to the docker group
+  become: true
+  user:
+    name: "{{ immich_user }}"
+    groups: docker
+    append: true

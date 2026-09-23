@@ -1,0 +1,17 @@
+---
+- name: Create immich group
+  become: true
+  group:
+    name: "{{ immich_group }}"
+    gid: "{{ immich_gid }}"
+    state: present
+
+- name: Create immich system user
+  become: true
+  user:
+    name: "{{ immich_user }}"
+    uid: "{{ immich_uid }}"
+    group: "{{ immich_group }}"
+    system: true
+    create_home: false
+    shell: /usr/sbin/nologin

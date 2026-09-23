@@ -1,0 +1,30 @@
+---
+- name: Read the currently configured IMMICH_VERSION
+  command: "grep ^IMMICH_VERSION= {{ immich_datadir }}/.env"
+  register: immich_current_version_line
+  changed_when: false
+
+- name: Set installed version fact
+  set_fact:
+    immich_installed_version: "{{ immich_current_version_line.stdout.split('=')[1] }}"
+
+- name: Look up latest Immich release
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/immich-app/immich/releases/latest
+    return_content: true
+  register: immich_latest_release
+
+- name: Set latest version fact
+  set_fact:
+    immich_latest_version: "{{ immich_latest_release.json.tag_name }}"
+
+- name: Set update-available flag
+  set_fact:
+    immich_update_available: "{{ immich_installed_version != immich_latest_version }}"
+
+- name: Report version status
+  debug:
+    msg: >-
+      Installed: {{ immich_installed_version }},
+      Latest: {{ immich_latest_version }},
+      Update needed: {{ immich_update_available }}

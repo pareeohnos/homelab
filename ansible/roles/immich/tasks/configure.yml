@@ -1,0 +1,107 @@
+---
+# This is a VM, not an LXC container, so it can mount NFS directly - no
+# unprivileged mount() restriction applies here, and none of the
+# lxc_share_mounts tag-discovery/bind-mount machinery is needed.
+- name: Mount the photos share
+  include_role:
+    name: nfs_mount
+  vars:
+    nfs_mounts:
+      - src: "{{ immich_photos_share_src }}"
+        path: "{{ immich_photos_share_mountpoint }}"
+
+- name: Create Immich's own dedicated upload folder on the share
+  become: true
+  file:
+    path: "{{ immich_upload_location }}"
+    state: directory
+    owner: "{{ immich_uid }}"
+    group: "{{ immich_gid }}"
+    mode: '0770'
+
+# Immich records which of these it's already verified in its own
+# database (system_metadata), not just on disk - so if UPLOAD_LOCATION
+# ever moves (as happened here) after Immich already considers these
+# checks passed, it tries to *verify* the markers exist rather than
+# recreate them, and fails outright rather than falling back to
+# creating them. Pre-creating them here makes that self-healing instead
+# of requiring another manual fix. force: no so this never touches
+# markers Immich itself has since legitimately rewritten.
+- name: Create Immich's mount-check subfolders
+  become: true
+  file:
+    path: "{{ immich_upload_location }}/{{ item }}"
+    state: directory
+    owner: "{{ immich_uid }}"
+    group: "{{ immich_gid }}"
+    mode: '0770'
+  loop:
+    - thumbs
+    - upload
+    - backups
+    - library
+    - profile
+    - encoded-video
+
+- name: Pre-create Immich's mount-check marker files
+  become: true
+  copy:
+    dest: "{{ immich_upload_location }}/{{ item }}/.immich"
+    content: ""
+    owner: "{{ immich_uid }}"
+    group: "{{ immich_gid }}"
+    mode: '0660'
+    force: false
+  loop:
+    - thumbs
+    - upload
+    - backups
+    - library
+    - profile
+    - encoded-video
+
+- name: Create the immich data directory
+  become: true
+  file:
+    path: "{{ immich_datadir }}"
+    state: directory
+    owner: "{{ immich_user }}"
+    group: "{{ immich_group }}"
+    mode: '0750'
+
+# Local-disk directories bind-mounted by docker-compose.yml - all owned by
+# the same identity the containers run as (immich_uid:immich_gid), since
+# the rootless compose file runs every service as that user, not root.
+- name: Create local data directories for postgres/redis/ml-cache
+  become: true
+  file:
+    path: "{{ immich_datadir }}/{{ item }}"
+    state: directory
+    owner: "{{ immich_user }}"
+    group: "{{ immich_group }}"
+    mode: '0750'
+  loop:
+    - postgres
+    - redis
+    - ml-model-cache
+
+- name: Deploy the .env file
+  become: true
+  template:
+    src: env.j2
+    dest: "{{ immich_datadir }}/.env"
+    owner: "{{ immich_user }}"
+    group: "{{ immich_group }}"
+    mode: '0600'
+  no_log: true
+  notify: restart immich
+
+- name: Deploy docker-compose.yml
+  become: true
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ immich_datadir }}/docker-compose.yml"
+    owner: "{{ immich_user }}"
+    group: "{{ immich_group }}"
+    mode: '0644'
+  notify: restart immich

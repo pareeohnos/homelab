@@ -1,0 +1,4 @@
+---
+immich_datadir: /opt/immich
+immich_backup_dir: /var/backups/immich
+immich_keep_backups: 3

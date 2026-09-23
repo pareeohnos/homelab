@@ -23,13 +23,31 @@
         path: /home/ansible/.ssh
         state: directory
 
-    - name: Copy root SSH key
+    - name: Read root's authorized_keys
+      slurp:
+        src: /root/.ssh/authorized_keys
+      register: root_authorized_keys
+
+    # Copying root's authorized_keys file verbatim also copies whatever
+    # key OPTIONS root's entries happen to have - cloud-init images (e.g.
+    # Ubuntu's) commonly wrap root's key in a forced command that just
+    # prints "please login as ubuntu instead" and disconnects, which would
+    # then block the ansible user's login in exactly the same way root's
+    # is deliberately blocked. Strip any such prefix, keeping only the
+    # actual key type/data/comment.
+    - name: Install a clean copy of root's key (without any forced-command options)
       copy:
         dest: "/home/ansible/.ssh/authorized_keys"
-        src: "/root/.ssh/authorized_keys"
-        remote_src: true
+        content: >-
+          {{
+            (root_authorized_keys.content | b64decode).splitlines()
+            | select('match', '.*ssh-\S+\s+\S+')
+            | map('regex_replace', '^.*?(ssh-\S+\s+\S+.*)$', '\1')
+            | join('\n')
+          }}
         group: ansible
         owner: ansible
+        mode: "0600"
 
     - name: Reload sshd
       service:

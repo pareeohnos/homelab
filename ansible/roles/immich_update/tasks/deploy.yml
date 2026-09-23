@@ -1,0 +1,16 @@
+---
+- name: Bump IMMICH_VERSION in .env
+  lineinfile:
+    path: "{{ immich_datadir }}/.env"
+    regexp: '^IMMICH_VERSION='
+    line: "IMMICH_VERSION={{ immich_latest_version }}"
+
+- name: Pull new images
+  command: docker compose pull
+  args:
+    chdir: "{{ immich_datadir }}"
+
+- name: Start Immich
+  systemd:
+    name: immich
+    state: started

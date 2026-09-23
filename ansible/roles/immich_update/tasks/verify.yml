@@ -1,0 +1,22 @@
+---
+- name: Wait for Immich to become active
+  systemd:
+    name: immich
+  register: immich_post_update_status
+  until: immich_post_update_status.status.ActiveState == "active"
+  retries: 15
+  delay: 4
+
+- name: Confirm containers are running
+  command: docker compose ps --status running --format '{{ '{{' }}.Name{{ '}}' }}'
+  args:
+    chdir: "{{ immich_datadir }}"
+  register: immich_running_containers
+  changed_when: false
+  until: immich_running_containers.stdout_lines | length == 4
+  retries: 15
+  delay: 4
+
+- name: Report update result
+  debug:
+    msg: "Immich updated to version {{ immich_latest_version }}"

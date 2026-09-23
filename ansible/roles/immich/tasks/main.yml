@@ -1,0 +1,28 @@
+---
+- name: Assert immich_db_password is set
+  assert:
+    that:
+      - immich_db_password | length > 0
+    fail_msg: >-
+      immich_db_password must be set (via group_vars/all/vault.yml) -
+      there's no safe built-in default for a database password.
+
+- name: Create user and group
+  include_tasks: user.yml
+
+- name: Install Docker
+  include_tasks: docker.yml
+
+- name: Configure Immich
+  include_tasks: configure.yml
+
+- name: Configure and start Immich service
+  include_tasks: service.yml
+
+- name: Setup reverse proxy
+  include_role:
+    name: caddy
+  vars:
+    caddy_url: vm-immich-01.home.hooper.co.uk
+    caddy_ports:
+      - port: "{{ immich_port }}"

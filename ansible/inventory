@@ -40,6 +40,9 @@ nzbget ansible_host=lxc-nzbget-01.home.hooper.co.uk ansible_user=ansible
 [plex_hosts]
 plex ansible_host=lxc-plex-01.home.hooper.co.uk ansible_user=ansible
 
+[immich_hosts]
+immich ansible_host=vm-immich-01.home.hooper.co.uk ansible_user=ansible
+
 # These servers are fine to have unattended upgrades configured. Not all servers should
 # have this as there are some servers we don't want to accidentally take down in the
 # event of a failed upgrade
@@ -50,3 +53,4 @@ sonarr ansible_host=lxc-sonarr-01.home.hooper.co.uk ansible_user=ansible
 radarr ansible_host=lxc-radarr-01.home.hooper.co.uk ansible_user=ansible
 nzbget ansible_host=lxc-nzbget-01.home.hooper.co.uk ansible_user=ansible
 plex ansible_host=lxc-plex-01.home.hooper.co.uk ansible_user=ansible
+immich ansible_host=vm-immich-01.home.hooper.co.uk ansible_user=ansible

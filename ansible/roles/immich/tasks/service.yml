@@ -1,0 +1,52 @@
+---
+# Wraps `docker compose up/down` in a systemd unit rather than relying
+# purely on each container's own `restart: always` - gives a normal
+# `systemctl status/start/stop immich` interface consistent with the
+# other app roles, and ties the whole stack's boot-start to Docker's own
+# (already-enabled) systemd dependency ordering.
+- name: Deploy systemd unit file for Immich
+  become: true
+  copy:
+    dest: /etc/systemd/system/immich.service
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Immich (docker compose)
+      Requires=docker.service
+      After=docker.service network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=true
+      WorkingDirectory={{ immich_datadir }}
+      ExecStart=/usr/bin/docker compose up -d
+      ExecStop=/usr/bin/docker compose down
+      TimeoutStartSec=300
+      Restart=on-failure
+      RestartSec=30
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: reload systemd
+
+- name: Enable and start Immich
+  become: true
+  systemd:
+    name: immich
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Wait for Immich to become active
+  become: true
+  systemd:
+    name: immich
+  register: immich_status
+  until: immich_status.status.ActiveState == "active"
+  retries: 15
+  delay: 4
+
+- name: Show access URL
+  debug:
+    msg: "Immich is running — browse to http://{{ ansible_facts['default_ipv4']['address'] }}:{{ immich_port }}"

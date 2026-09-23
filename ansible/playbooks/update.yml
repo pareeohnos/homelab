@@ -37,3 +37,11 @@
   become: true
   roles:
     - plex_update
+
+- name: Update immich
+  hosts: immich
+  gather_facts: yes
+  remote_user: ansible
+  become: true
+  roles:
+    - immich_update

@@ -1,0 +1,43 @@
+---
+- name: Ensure backup directory exists
+  file:
+    path: "{{ immich_backup_dir }}"
+    state: directory
+    mode: '0750'
+
+- name: Stop Immich before backup
+  systemd:
+    name: immich
+    state: stopped
+
+- name: Set backup timestamp
+  set_fact:
+    immich_backup_timestamp: "{{ ansible_facts['date_time']['iso8601_basic_short'] }}"
+
+# Postgres/redis data plus config - not ml-model-cache (just a regenerable
+# cache) and not the photos themselves (already durable on the NAS, and far
+# too large for a routine pre-update backup).
+- name: Archive local data (postgres, redis, .env, docker-compose.yml)
+  archive:
+    path:
+      - "{{ immich_datadir }}/postgres"
+      - "{{ immich_datadir }}/redis"
+      - "{{ immich_datadir }}/.env"
+      - "{{ immich_datadir }}/docker-compose.yml"
+    dest: "{{ immich_backup_dir }}/immich-data-{{ immich_installed_version }}-{{ immich_backup_timestamp }}.tar.gz"
+    format: gz
+
+- name: Find old backups
+  find:
+    paths: "{{ immich_backup_dir }}"
+    patterns: "immich-data-*.tar.gz"
+    age: "0s"
+  register: immich_backups
+
+- name: Prune old backups beyond retention count
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ (immich_backups.files | sort(attribute='mtime', reverse=true))[immich_keep_backups:] }}"
+  loop_control:
+    label: "{{ item.path }}"

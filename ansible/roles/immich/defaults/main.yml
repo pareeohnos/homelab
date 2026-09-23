@@ -1,0 +1,56 @@
+---
+immich_user: immich
+immich_group: immich
+# Pinned to match the "photos" NFS share's unshifted identity (see
+# roles/lxc_share_mounts/defaults/main.yml nfs_share_mounts.photos) - since
+# this VM has no unprivileged-container UID shift at all, this plain value
+# is exactly what the NAS itself should be chowned to, no arithmetic
+# needed. Also used (not just for the mount, but for docker-compose's own
+# `user:` directive on every service - see templates/docker-compose.yml.j2)
+# so all of Immich's containers run as this identity throughout, not root.
+immich_uid: 3000
+immich_gid: 3000
+
+immich_datadir: /opt/immich
+immich_port: 2283
+
+# The photos share is mounted directly on this VM - unlike LXC containers,
+# a VM has its own real kernel and isn't subject to the unprivileged
+# mount() restriction, so this is just a plain nfs_mount (direct mode),
+# not the tag-based lxc_share_mounts machinery.
+#
+# The NAS only exports the "Backup" share as a whole - "Photos" is a
+# subfolder within it, not a separate export - so the mount destination
+# has to be the share's own root, not a path already named "Photos".
+immich_photos_share_src: pm-nas-01.home.hooper.co.uk:/mnt/Shinobi/Backup
+immich_photos_share_mountpoint: /mnt/Shinobi/Backup
+
+# Immich's own managed storage - anything created through the app
+# (mobile backup, web upload) is written here, and only here. Dedicated
+# and exclusive to Immich (owned by immich_uid:immich_gid, not the
+# shared group-3000 setgid setup the rest of the share uses for SMB
+# writers), separate from everything else already on the share so
+# Immich's own upload/library/thumbs folders never mix with content
+# other people are managing directly over SMB.
+immich_upload_location: /mnt/Shinobi/Backup/Immich
+
+# Everything else already on the share (Photos, and anything else) -
+# bind-mounted read-only into immich-server so it can be added as an
+# External Library and browsed/indexed, without Immich ever writing to
+# or reorganizing files other people access directly over SMB. Immich
+# has no write path into external libraries regardless (metadata edits
+# live in its own database, not the files), so read-only is enforced
+# here as a second layer, not just relied on implicitly.
+immich_external_library_mount: /external
+
+# Real, verified release tag (not "release", which floats) - the update
+# role bumps this deliberately rather than letting it drift silently.
+immich_version: v3.2.2
+
+immich_timezone: Etc/UTC
+immich_db_username: postgres
+immich_db_database_name: immich
+# No default - must be set via group_vars/all/vault.yml, same pattern as
+# nzbget_control_password. Only A-Za-z0-9 characters, per upstream's own
+# example.env note (special characters can break Docker's env parsing).
+immich_db_password: ""
