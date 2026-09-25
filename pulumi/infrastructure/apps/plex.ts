@@ -14,12 +14,12 @@ const config = new pulumi.Config();
 
 const hostsConfig = config.requireObject<HostsConfiguration>("hosts");
 const proxmoxConfig = config.requireObject<ProxmoxConfiguration>("proxmox");
-const nodeConfig = proxmoxConfig.nodes[ProxmoxNodeNames.MANAGEMENT];
+const nodeConfig = proxmoxConfig.nodes[ProxmoxNodeNames.APPS];
 
 export const plexContainer = new proxmox.ct.Container(
   hostsConfig.plex.hostname,
   buildLxcConfiguration(
-    ProxmoxNodeNames.MANAGEMENT,
+    ProxmoxNodeNames.APPS,
     Hosts.PLEX,
     {
       cpu: {

@@ -19,7 +19,7 @@ const hostsConfig = config.requireObject<HostsConfiguration>("hosts");
 export const sonarrContainer = new proxmox.ct.Container(
   hostsConfig.sonarr.hostname,
   buildLxcConfiguration(
-    ProxmoxNodeNames.MANAGEMENT,
+    ProxmoxNodeNames.APPS,
     Hosts.SONARR,
     {
       description: "Sonarr",
@@ -43,7 +43,7 @@ export const sonarrContainer = new proxmox.ct.Container(
 export const radarrContainer = new proxmox.ct.Container(
   hostsConfig.radarr.hostname,
   buildLxcConfiguration(
-    ProxmoxNodeNames.MANAGEMENT,
+    ProxmoxNodeNames.APPS,
     Hosts.RADARR,
     {
       description: "Radarr",

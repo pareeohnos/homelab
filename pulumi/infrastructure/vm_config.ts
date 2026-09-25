@@ -10,7 +10,7 @@ import {
 import { getSshKey } from "./utils";
 
 // Builds a VM by cloning a pre-built cloud-init template (see
-// management/vm_template.ts) rather than installing an OS from scratch -
+// apps/vm_template.ts) rather than installing an OS from scratch -
 // the disk image already has an OS on it, so there's no installer step to
 // automate. Per-VM identity (hostname/IP/SSH keys) is applied via
 // cloud-init on first boot, the same way buildLxcConfiguration configures

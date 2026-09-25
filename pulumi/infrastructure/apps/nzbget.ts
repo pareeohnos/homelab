@@ -12,7 +12,7 @@ const hostsConfig = config.requireObject<HostsConfiguration>("hosts");
 export const nzbgetContainer = new proxmox.ct.Container(
   hostsConfig.nzbget.hostname,
   buildLxcConfiguration(
-    ProxmoxNodeNames.MANAGEMENT,
+    ProxmoxNodeNames.APPS,
     Hosts.NZB_GET,
     {
       description: "NZBGet",

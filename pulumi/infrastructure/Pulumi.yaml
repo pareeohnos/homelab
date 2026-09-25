@@ -99,7 +99,7 @@ config:
                   # - name: vmbr3
                   #   autoStart: true
                   #   comment: Proxmox OPNSense network
-        management:
+        apps:
           name: "alps"
           dataStoreId: local-lvm
           lxcTemplateFileId: local:vztmpl/ubuntu-25.04-1.1_amd64.tar.zst

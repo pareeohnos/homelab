@@ -5,7 +5,7 @@ import { ProxmoxConfiguration, ProxmoxNodeNames } from "../types";
 
 const config = new pulumi.Config();
 const proxmoxConfig = config.requireObject<ProxmoxConfiguration>("proxmox");
-const nodeConfig = proxmoxConfig.nodes[ProxmoxNodeNames.MANAGEMENT];
+const nodeConfig = proxmoxConfig.nodes[ProxmoxNodeNames.APPS];
 
 // Browse images here to get a different file
 //

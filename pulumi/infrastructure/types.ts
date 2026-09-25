@@ -2,7 +2,7 @@ import { NetworkBridgeArgs } from "@muhlba91/pulumi-proxmoxve/network";
 
 export enum ProxmoxNodeNames {
   NETWORKING = "networking",
-  MANAGEMENT = "management",
+  APPS = "apps",
 }
 
 export enum Hosts {
@@ -11,7 +11,7 @@ export enum Hosts {
   ROUTER = "router",
   UNIFI = "unifiController",
 
-  // Management hosts
+  // Apps hosts
   HOME_ASSISTANT = "homeAssistant",
   SONARR = "sonarr",
   RADARR = "radarr",

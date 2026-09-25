@@ -8,12 +8,12 @@ import { routerVm } from "./network/router";
 import { dnsServerContainer } from "./network/dns";
 import { unifiControllerContainer } from "./network/unifi_controller";
 
-// Management
-import { homeAssistantVm } from "./management/home_assistant";
-import { nzbgetContainer } from "./management/nzbget";
-import { sonarrContainer, radarrContainer } from "./management/the_arrs";
-import { plexContainer } from "./management/plex";
-import { immichVm } from "./management/immich";
+// Apps
+import { homeAssistantVm } from "./apps/home_assistant";
+import { nzbgetContainer } from "./apps/nzbget";
+import { sonarrContainer, radarrContainer } from "./apps/the_arrs";
+import { plexContainer } from "./apps/plex";
+import { immichVm } from "./apps/immich";
 
 /**
  * Network host
@@ -28,15 +28,15 @@ export const himalayasDnsServer = dnsServerContainer;
 export const himalayasUnifiController = unifiControllerContainer;
 
 /**
- * Management host
+ * Apps host
  *
- * The following resources are all for the management host "Alps". This contains
- * VM's for the management and running of the rest of the homelabe. For example,
- * a kubernetes master node, HomeAssistant, Git etc
+ * The following resources are all for the apps host "Alps". This hosts the
+ * user-facing applications running in the homelab - media (Sonarr, Radarr,
+ * NZBGet, Plex), photos (Immich), home automation (Home Assistant), etc.
  **/
-export const managementHomeAssistantVm = homeAssistantVm;
-export const managementSonarrContainer = sonarrContainer;
-export const managementRadarrContainer = radarrContainer;
-export const managementNzbGetContainer = nzbgetContainer;
-export const managementPlexContainer = plexContainer;
-export const managementImmichVm = immichVm;
+export const appsHomeAssistantVm = homeAssistantVm;
+export const appsSonarrContainer = sonarrContainer;
+export const appsRadarrContainer = radarrContainer;
+export const appsNzbGetContainer = nzbgetContainer;
+export const appsPlexContainer = plexContainer;
+export const appsImmichVm = immichVm;

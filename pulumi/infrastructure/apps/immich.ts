@@ -14,12 +14,12 @@ const config = new pulumi.Config();
 
 const proxmoxConfig = config.requireObject<ProxmoxConfiguration>("proxmox");
 const hostsConfig = config.requireObject<HostsConfiguration>("hosts");
-const nodeConfig = proxmoxConfig.nodes[ProxmoxNodeNames.MANAGEMENT];
+const nodeConfig = proxmoxConfig.nodes[ProxmoxNodeNames.APPS];
 
 export const immichVm = new proxmox.vm.VirtualMachine(
   hostsConfig.immich.hostname,
   buildVmConfiguration(
-    ProxmoxNodeNames.MANAGEMENT,
+    ProxmoxNodeNames.APPS,
     Hosts.IMMICH,
     ubuntuVmTemplate.vmId,
     {

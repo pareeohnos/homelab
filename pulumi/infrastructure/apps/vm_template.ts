@@ -5,14 +5,14 @@ import { ProxmoxConfiguration, ProxmoxNodeNames } from "../types";
 
 const config = new pulumi.Config();
 const proxmoxConfig = config.requireObject<ProxmoxConfiguration>("proxmox");
-const nodeConfig = proxmoxConfig.nodes[ProxmoxNodeNames.MANAGEMENT];
+const nodeConfig = proxmoxConfig.nodes[ProxmoxNodeNames.APPS];
 
 // Browse cloud images here to get a different release
 //
 // https://cloud-images.ubuntu.com/releases/
 //
 // Matches the 26.04 release already used for the LXC template
-// (management/lxc_template.ts).
+// (apps/lxc_template.ts).
 
 // contentType "import" (not "iso") is what makes this usable as a VM
 // disk source via importFrom below - Proxmox 8.1+'s native cloud image
