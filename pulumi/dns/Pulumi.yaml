@@ -36,8 +36,19 @@ config:
 
             - type: "A"
               ipAddress: "10.0.10.3"
-              hostname: "lxc-unifi-controller-01"
-              comments: "Unifi network controller"
+              hostname: "vm-unifi-os-01"
+              comments: "Unifi OS"
+
+            # ACCESS POINTS / SWITCHES
+            - type: "A"
+              ipAddress: "10.0.10.50"
+              hostname: "sw-usw-pro-max-01"
+              comments: "Unifi USW Pro Max 16 PoE"
+
+            - type: "A"
+              ipAddress: "10.0.10.51"
+              hostname: "ap-u7-pro-xg-01"
+              comment: "Unifi U7 Pro XG"
 
             #
             # TRUSTED ADDRESSES

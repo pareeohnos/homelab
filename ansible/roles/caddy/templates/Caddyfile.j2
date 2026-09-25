@@ -15,7 +15,28 @@
 
 {% for mapping in caddy_ports %}
     handle{% if mapping.path is defined %} {{ mapping.path }}{% endif %} {
+{% if mapping.tls_insecure | default(false) %}
+        reverse_proxy https://{{ mapping.host | default(caddy_upstream_host) }}:{{ mapping.port }} {
+            transport http {
+                tls_insecure_skip_verify
+                # Caddy 2.11+ defaults to sending the upstream's own
+                # address as the Host header rather than the client's,
+                # which appliance-style backends (self-signed HTTPS,
+                # WebSocket admin UIs) commonly reject for WebSocket
+                # upgrades specifically, even while serving plain
+                # requests fine - manifesting as a blank page/stuck
+                # loading state, not a clean error. HTTP/1.1 is also
+                # required since WebSocket upgrade doesn't exist in H2.
+                versions 1.1
+            }
+            flush_interval -1
+            header_up Host {hostport}
+            header_up Origin ""
+            header_up -Referer
+        }
+{% else %}
         reverse_proxy {{ mapping.host | default(caddy_upstream_host) }}:{{ mapping.port }}
+{% endif %}
     }
 {% endfor %}
 }

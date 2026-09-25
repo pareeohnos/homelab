@@ -1,0 +1,55 @@
+---
+- name: Assert unifi_os_installer_url is set
+  assert:
+    that:
+      - unifi_os_installer_url | length > 0
+    fail_msg: >-
+      unifi_os_installer_url must be set - grab the current signed
+      download link from https://ui.com/download/software/unifi-os-server
+      (it expires, so there's no stable default to fall back to).
+
+- name: Install prerequisites
+  become: true
+  apt:
+    name:
+      - podman
+      - uidmap
+      - slirp4netns
+    state: present
+    update_cache: true
+
+- name: Create installer directory
+  become: true
+  file:
+    path: "{{ unifi_os_installer_dir }}"
+    state: directory
+    mode: '0750'
+
+- name: Download the UniFi OS Server installer
+  become: true
+  get_url:
+    url: "{{ unifi_os_installer_url }}"
+    dest: "{{ unifi_os_installer_path }}"
+    mode: '0750'
+    timeout: 300
+  # Not idempotency-relevant on its own (the URL changes every time it's
+  # regenerated) - the actual re-run guard is the installer step below.
+
+- name: Run the UniFi OS Server installer
+  become: true
+  # Without --non-interactive, the installer blocks forever reading an
+  # initial prompt from its controlling tty - Ansible has no way to
+  # answer that, so the task just hangs indefinitely rather than
+  # failing outright.
+  command: "{{ unifi_os_installer_path }} --non-interactive"
+  args:
+    creates: "{{ unifi_os_install_marker }}"
+
+- name: Setup reverse proxy
+  include_role:
+    name: caddy
+  vars:
+    caddy_url: vm-unifi-os-01.home.hooper.co.uk
+    caddy_ports:
+      - port: "{{ unifi_os_webui_port }}"
+        tls_insecure: true

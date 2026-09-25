@@ -9,7 +9,7 @@ export enum Hosts {
   // Networking hosts
   DNS = "dns",
   ROUTER = "router",
-  UNIFI = "unifiController",
+  UNIFI_OS = "unifiOs",
 
   // Apps hosts
   HOME_ASSISTANT = "homeAssistant",

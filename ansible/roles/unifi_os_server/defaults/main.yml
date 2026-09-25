@@ -1,0 +1,21 @@
+---
+# The installer download link is a time-limited, signed CloudFront URL -
+# there's no stable/versioned URL or API to fetch it, unlike every other
+# app in this repo. Grab the current one from
+# https://ui.com/download/software/unifi-os-server (right-click the
+# download button -> copy link address) and pass it in explicitly, e.g.:
+#
+#   ansible-playbook playbooks/unifi_os.yml -e unifi_os_installer_url=https://fw-download.ubnt.com/...
+#
+# No default - there's no safe/stable value to fall back to.
+unifi_os_installer_url: ""
+
+unifi_os_installer_dir: /opt/unifi-os-server
+unifi_os_installer_path: "{{ unifi_os_installer_dir }}/installer.bin"
+
+# Installed by the installer itself under this user - used as an
+# idempotency marker (see tasks/main.yml) so re-running the playbook
+# with a fresh signed URL doesn't re-run the installer unnecessarily.
+unifi_os_install_marker: /home/uosserver
+
+unifi_os_webui_port: 11443

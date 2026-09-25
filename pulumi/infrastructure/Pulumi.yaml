@@ -24,12 +24,14 @@ config:
         tags:
           - container
           - networking
-      unifiController:
-        hostname: lxc-unifi-controller-01
+      # Replaced the old unifiController LXC entry - same static IP,
+      # different hostname/DNS record.
+      unifiOs:
+        hostname: vm-unifi-os-01
         ipAddress: 10.0.10.3
         vlanId: 10
         tags:
-          - container
+          - vm
           - networking
           - unifi
       homeAssistant:

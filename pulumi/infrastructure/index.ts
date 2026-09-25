@@ -6,7 +6,7 @@ require("dotenv").config({
 import { networkBridges, networkVlans } from "./network/network";
 import { routerVm } from "./network/router";
 import { dnsServerContainer } from "./network/dns";
-import { unifiControllerContainer } from "./network/unifi_controller";
+import { unifiOsVm } from "./network/unifi_os";
 
 // Apps
 import { homeAssistantVm } from "./apps/home_assistant";
@@ -25,7 +25,7 @@ export const himalayasBridges = networkBridges;
 export const himalayasVlans = networkVlans;
 export const himalayasRouterVm = routerVm;
 export const himalayasDnsServer = dnsServerContainer;
-export const himalayasUnifiController = unifiControllerContainer;
+export const himalayasUnifiOsVm = unifiOsVm;
 
 /**
  * Apps host

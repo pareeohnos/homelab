@@ -2,7 +2,7 @@
 # Use IP addresses here, as during the bootstrap phase we don't have a DNS
 # server running yet, so we can't use hostnames
 10.0.10.2 # DNS
-10.0.10.3 # Unifi controller
+10.0.10.3 ansible_user=ubuntu # Unifi OS Server
 
 10.0.10.254 # Himalays
 10.0.10.253 # Alps
@@ -27,10 +27,10 @@ lxc-dns-01.home.hooper.co.uk ansible_user=ansible
 
 [networking]
 lxc-dns-01.home.hooper.co.uk ansible_user=ansible
-lxc-unifi-controller-01.home.hooper.co.uk ansible_user=ansible
+unifi_os
 
-[unifi]
-lxc-unifi-controller-01.home.hooper.co.uk ansible_user=ansible
+[unifi_os_hosts]
+unifi_os ansible_host=vm-unifi-os-01.home.hooper.co.uk ansible_user=ansible
 
 [arrs]
 sonarr ansible_host=lxc-sonarr-01.home.hooper.co.uk ansible_user=ansible
@@ -48,7 +48,7 @@ immich ansible_host=vm-immich-01.home.hooper.co.uk ansible_user=ansible
 # event of a failed upgrade
 [unattended_upgradable]
 lxc-dns-01.home.hooper.co.uk ansible_user=ansible
-lxc-unifi-controller-01.home.hooper.co.uk ansible_user=ansible
+unifi_os
 sonarr ansible_host=lxc-sonarr-01.home.hooper.co.uk ansible_user=ansible
 radarr ansible_host=lxc-radarr-01.home.hooper.co.uk ansible_user=ansible
 nzbget ansible_host=lxc-nzbget-01.home.hooper.co.uk ansible_user=ansible

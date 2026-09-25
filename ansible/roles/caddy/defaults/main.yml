@@ -24,6 +24,16 @@
 #     - port: 9898
 #       path: /api/*
 #     - port: 8989   # catch-all, no path - must come last
+#
+# Set tls_insecure: true on an entry if the upstream itself serves HTTPS
+# with a self-signed cert (e.g. an appliance-style admin UI) - proxies to
+# https:// instead of plain HTTP and skips upstream cert verification
+# (Caddy's own cert for caddy_url, served to actual clients, is untouched
+# and still fully verified as normal):
+#
+#   caddy_ports:
+#     - port: 11443
+#       tls_insecure: true
 # ---------------------------------------------------------------------------
 
 # The public hostname Caddy will serve and request a TLS cert for.

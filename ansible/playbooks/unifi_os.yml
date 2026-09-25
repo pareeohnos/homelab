@@ -1,0 +1,7 @@
+- name: UniFi OS Server
+  hosts: unifi_os_hosts
+  gather_facts: yes
+  remote_user: ansible
+  become: true
+  roles:
+    - unifi_os_server
